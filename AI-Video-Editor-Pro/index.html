@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Video Editor Pro — browser-based professional video editor" />
+  <title>AI Video Editor Pro</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='14' width='64' height='64' fill='%236c8cff'/%3E%3Cpolygon points='24,16 48,32 24,48' fill='white'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#preview-stage">Skip to preview</a>
+  <div id="app" class="app">
+    <header class="app-header" role="banner">
+      <div class="header-left">
+        <div class="brand" aria-label="AI Video Editor Pro">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22"><rect x="2" y="4" width="20" height="16" rx="4" fill="currentColor" opacity=".2"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+          </span>
+          <span class="brand-name">AI Video Editor Pro</span>
+        </div>
+        <div class="header-actions">
+          <button class="btn ghost" data-action="new-project" data-i18n-title="newProject" title="New Project" aria-label="New Project">New</button>
+          <button class="btn ghost" data-action="save-project" data-i18n-title="saveProject" title="Save Project" aria-label="Save Project">Save</button>
+          <button class="btn icon" data-action="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
+            <svg viewBox="0 0 24 24"><path d="M7 8H3v4M3.5 12A9 9 0 1 0 7 6.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <button class="btn icon" data-action="redo" title="Redo (Ctrl+Y)" aria-label="Redo">
+            <svg viewBox="0 0 24 24"><path d="M17 8h4v4M20.5 12A9 9 0 1 1 17 6.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="header-center">
+        <label class="sr-only" for="project-name">Project name</label>
+        <input id="project-name" class="project-name" type="text" value="Untitled Project" maxlength="80" autocomplete="off" />
+        <span id="project-meta" class="project-meta">1920×1080 · 30fps</span>
+      </div>
+      <div class="header-right">
+        <button class="btn ghost" data-action="open-help" title="Help" aria-label="Help">Help</button>
+        <button class="btn ghost" data-action="open-settings" title="Settings" aria-label="Settings">Settings</button>
+        <button class="btn primary" data-action="open-export" title="Export" aria-label="Export video">Export</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar left-sidebar" id="left-sidebar" aria-label="Media tools">
+        <nav class="tool-tabs" role="tablist" aria-label="Tool panels">
+          <button class="tool-tab active" data-panel="media" role="tab" aria-selected="true">Media</button>
+          <button class="tool-tab" data-panel="audio" role="tab">Audio</button>
+          <button class="tool-tab" data-panel="text" role="tab">Text</button>
+          <button class="tool-tab" data-panel="subtitles" role="tab">Subtitles</button>
+          <button class="tool-tab" data-panel="elements" role="tab">Elements</button>
+          <button class="tool-tab" data-panel="transitions" role="tab">Transitions</button>
+          <button class="tool-tab" data-panel="effects" role="tab">Effects</button>
+          <button class="tool-tab" data-panel="filters" role="tab">Filters</button>
+          <button class="tool-tab" data-panel="ai" role="tab">AI Tools</button>
+          <button class="tool-tab" data-panel="templates" role="tab">Templates</button>
+          <button class="tool-tab" data-panel="brand" role="tab">Brand Kit</button>
+        </nav>
+
+        <div class="panel-stack">
+          <section class="tool-panel active" id="panel-media" role="tabpanel">
+            <h2>Media</h2>
+            <div class="dropzone" id="media-dropzone" tabindex="0" role="button" aria-label="Upload videos">
+              <strong>Drag &amp; Drop Your Video Here</strong>
+              <p>MP4, WebM, MOV, AVI, MKV (browser support varies)</p>
+              <button class="btn primary" type="button" id="browse-files">Browse Files</button>
+              <input id="file-input" type="file" accept="video/*,.mkv,.mov,.avi" multiple hidden />
+            </div>
+            <div class="recorder-card">
+              <div class="recorder-head"><div><strong>Capture Studio</strong><p class="hint">Record your screen, webcam and microphone directly into the editor.</p></div><span id="sr-status" class="status-pill">Ready</span></div>
+              <div class="row-2">
+                <label>Layout<select id="sr-preview"><option value="screen">Screen</option><option value="camera">Webcam</option><option value="screen-camera" selected>Screen + Webcam</option></select></label>
+                <label>Preview <span id="sr-preview-label">Screen + Webcam</span><input id="sr-webcam" type="checkbox" checked /> Webcam</label>
+              </div>
+              <div class="btn-row wrap">
+                <label class="check"><input id="sr-mic" type="checkbox" checked /> Mic</label>
+                <label class="check"><input id="sr-system" type="checkbox" checked /> System audio</label>
+                <span class="rec-timer" id="sr-timer">00:00</span>
+              </div>
+              <div class="btn-row wrap">
+                <button class="btn primary" id="sr-start">● Record</button><button class="btn" id="sr-pause" disabled>Pause</button><button class="btn" id="sr-resume" disabled>Resume</button><button class="btn danger" id="sr-stop" disabled>Stop &amp; Add</button>
+              </div>
+            </div>
+            <div class="media-list" id="media-list"></div>
+            <p class="empty-hint" id="media-empty">Upload a video to start editing.</p>
+          </section>
+
+          <section class="tool-panel" id="panel-audio" role="tabpanel" hidden>
+            <h2>Audio</h2>
+            <div class="control-group">
+              <label>Volume <span id="vol-label">100%</span></label>
+              <input type="range" id="audio-volume" min="0" max="200" value="100" />
+              <label class="check"><input type="checkbox" id="audio-mute" /> Mute</label>
+            </div>
+            <div class="row-2">
+              <label>Fade in (s)<input type="number" id="fade-in" min="0" max="30" step="0.1" value="0" /></label>
+              <label>Fade out (s)<input type="number" id="fade-out" min="0" max="30" step="0.1" value="0" /></label>
+            </div>
+            <div class="btn-row wrap">
+              <button class="btn" data-action="extract-audio">Extract audio</button>
+              <button class="btn" data-action="replace-audio">Replace audio</button>
+              <input id="replace-audio-input" type="file" accept="audio/*" hidden />
+            </div>
+            <h3>Background music</h3>
+            <p class="hint">Original demo tones generated in-browser. Not commercial library tracks.</p>
+            <div id="music-library" class="card-grid"></div>
+            <h3>Voice-over</h3>
+            <div class="btn-row wrap">
+              <button class="btn" data-action="vo-start">Start</button>
+              <button class="btn" data-action="vo-pause">Pause</button>
+              <button class="btn" data-action="vo-resume">Resume</button>
+              <button class="btn" data-action="vo-stop">Stop</button>
+              <button class="btn" data-action="vo-preview">Preview</button>
+              <button class="btn primary" data-action="vo-add">Add to timeline</button>
+              <button class="btn danger" data-action="vo-delete">Delete</button>
+            </div>
+            <p class="hint" id="vo-status">Microphone idle</p>
+            <canvas id="waveform" class="waveform" width="320" height="64" aria-hidden="true"></canvas>
+          </section>
+
+          <section class="tool-panel" id="panel-text" role="tabpanel" hidden>
+            <h2>Text</h2>
+            <p class="empty-hint" id="text-empty">Add your first text layer.</p>
+            <div class="btn-row wrap">
+              <button class="btn" data-text-preset="heading">Heading</button>
+              <button class="btn" data-text-preset="subheading">Subheading</button>
+              <button class="btn" data-text-preset="body">Body</button>
+              <button class="btn" data-text-preset="caption">Caption</button>
+              <button class="btn primary" data-text-preset="custom">Custom</button>
+            </div>
+            <label>Content<textarea id="text-content" rows="3"></textarea></label>
+            <div class="row-2">
+              <label>Font
+                <select id="text-font">
+                  <option>Inter</option><option>Georgia</option><option>Arial</option>
+                  <option>Impact</option><option>Courier New</option><option>Noto Sans</option>
+                </select>
+              </label>
+              <label>Size <input type="number" id="text-size" min="8" max="200" value="48" /></label>
+            </div>
+            <div class="row-2">
+              <label>Color <input type="color" id="text-color" value="#ffffff" /></label>
+              <label>Opacity <input type="range" id="text-opacity" min="0" max="100" value="100" /></label>
+            </div>
+            <div class="btn-row">
+              <button class="btn icon" data-text-style="bold" aria-label="Bold"><b>B</b></button>
+              <button class="btn icon" data-text-style="italic" aria-label="Italic"><i>I</i></button>
+              <button class="btn icon" data-text-style="underline" aria-label="Underline"><u>U</u></button>
+              <button class="btn icon" data-text-align="left" aria-label="Align left">L</button>
+              <button class="btn icon" data-text-align="center" aria-label="Align center">C</button>
+              <button class="btn icon" data-text-align="right" aria-label="Align right">R</button>
+            </div>
+            <div class="row-2">
+              <label>Letter spacing <input type="number" id="text-tracking" step="0.1" value="0" /></label>
+              <label>Line height <input type="number" id="text-leading" step="0.05" value="1.2" /></label>
+            </div>
+            <div class="row-2">
+              <label>Background <input type="color" id="text-bg" value="#000000" /></label>
+              <label class="check"><input type="checkbox" id="text-bg-on" /> Fill</label>
+            </div>
+            <h3>Animation</h3>
+            <select id="text-anim">
+              <option value="none">None</option>
+              <option value="fadeIn">Fade In</option>
+              <option value="fadeOut">Fade Out</option>
+              <option value="slideLeft">Slide Left</option>
+              <option value="slideRight">Slide Right</option>
+              <option value="slideUp">Slide Up</option>
+              <option value="slideDown">Slide Down</option>
+              <option value="zoomIn">Zoom In</option>
+              <option value="zoomOut">Zoom Out</option>
+              <option value="pop">Pop</option>
+              <option value="typewriter">Typewriter</option>
+            </select>
+            <label>Duration (s)<input type="number" id="text-anim-dur" min="0.1" max="10" step="0.1" value="0.6" /></label>
+          </section>
+
+          <section class="tool-panel" id="panel-subtitles" role="tabpanel" hidden>
+            <h2>Subtitles</h2>
+            <div class="btn-row wrap">
+              <button class="btn primary" data-action="sub-add">Add</button>
+              <button class="btn" data-action="sub-srt-import">Upload SRT</button>
+              <input id="srt-input" type="file" accept=".srt,text/plain" hidden />
+              <button class="btn" data-action="sub-srt-export">Export SRT</button>
+              <button class="btn" data-action="sub-add-track">New track</button>
+            </div>
+            <label>Track
+              <select id="sub-track"></select>
+            </label>
+            <div id="subtitle-list" class="sub-list"></div>
+            <h3>AI Auto Subtitles</h3>
+            <p class="hint class-c">Class C — requires a speech-to-text API. No fake processing.</p>
+            <label>Language
+              <select id="stt-lang">
+                <option value="en">English</option>
+                <option value="bn">Bangla</option>
+                <option value="hi">Hindi</option>
+                <option value="ar">Arabic</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+              </select>
+            </label>
+            <button class="btn" data-action="ai-subtitles">Generate subtitles</button>
+            <h3>Translate</h3>
+            <div class="row-2">
+              <select id="tr-from"><option value="en">English</option><option value="bn">Bangla</option><option value="ar">Arabic</option></select>
+              <select id="tr-to"><option value="bn">Bangla</option><option value="en">English</option><option value="ar">Arabic</option></select>
+            </div>
+            <button class="btn" data-action="ai-translate">Translate subtitles</button>
+          </section>
+
+          <section class="tool-panel" id="panel-elements" role="tabpanel" hidden>
+            <h2>Elements</h2>
+            <p class="hint">Shapes and overlays composited on the preview canvas.</p>
+            <div class="btn-row wrap">
+              <button class="btn" data-element="rect">Rectangle</button>
+              <button class="btn" data-element="circle">Circle</button>
+              <button class="btn" data-element="line">Line</button>
+              <button class="btn" data-element="arrow">Arrow</button>
+              <button class="btn" data-element="watermark">Watermark box</button>
+            </div>
+          </section>
+
+          <section class="tool-panel" id="panel-transitions" role="tabpanel" hidden>
+            <h2>Transitions</h2>
+            <p class="hint">Applied at the start of the selected clip.</p>
+            <div id="transition-grid" class="chip-grid"></div>
+            <label>Duration (s)<input type="number" id="trans-dur" min="0.1" max="3" step="0.1" value="0.5" /></label>
+          </section>
+
+          <section class="tool-panel" id="panel-effects" role="tabpanel" hidden>
+            <h2>Effects</h2>
+            <div id="effect-grid" class="chip-grid"></div>
+            <label>Intensity <span id="fx-int-label">50%</span>
+              <input type="range" id="fx-intensity" min="0" max="100" value="50" />
+            </label>
+          </section>
+
+          <section class="tool-panel" id="panel-filters" role="tabpanel" hidden>
+            <h2>Filters</h2>
+            <div id="filter-grid" class="chip-grid"></div>
+            <label>Intensity <span id="filter-int-label">100%</span>
+              <input type="range" id="filter-intensity" min="0" max="100" value="100" />
+            </label>
+            <h3>Adjustments</h3>
+            <div id="adjust-sliders"></div>
+            <button class="btn" data-action="reset-adjust">Reset adjustments</button>
+          </section>
+
+          <section class="tool-panel" id="panel-ai" role="tabpanel" hidden>
+            <h2>AI Tools</h2>
+            <p class="hint">Local analysis (silence/scenes) runs in the browser. Cloud AI needs an API key in Settings — keys are never hardcoded.</p>
+            <button class="btn" data-action="ai-silence">Silence detection</button>
+            <button class="btn" data-action="ai-scenes">Scene detection</button>
+            <button class="btn" data-action="ai-autocut">Auto cut</button>
+            <label>Highlight length
+              <select id="highlight-len">
+                <option value="15">15s</option>
+                <option value="30" selected>30s</option>
+                <option value="60">60s</option>
+                <option value="90">90s</option>
+              </select>
+            </label>
+            <button class="btn" data-action="ai-highlight">Highlight generator</button>
+            <h3>Social auto-resize</h3>
+            <div id="social-presets" class="chip-grid"></div>
+            <h3>Thumbnail</h3>
+            <div class="btn-row wrap">
+              <button class="btn" data-action="thumb-capture">Capture frame</button>
+              <button class="btn" data-action="thumb-download">Download</button>
+              <button class="btn" data-action="ai-thumb">AI thumbnail</button>
+            </div>
+            <canvas id="thumb-canvas" width="640" height="360" class="thumb-canvas"></canvas>
+          </section>
+
+          <section class="tool-panel" id="panel-templates" role="tabpanel" hidden>
+            <h2>Templates</h2>
+            <div id="template-list" class="card-grid"></div>
+          </section>
+
+          <section class="tool-panel" id="panel-brand" role="tabpanel" hidden>
+            <h2>Brand Kit</h2>
+            <label>Logo<input id="brand-logo" type="file" accept="image/*" /></label>
+            <label>Primary color <input type="color" id="brand-primary" value="#6c8cff" /></label>
+            <label>Secondary color <input type="color" id="brand-secondary" value="#22d3ee" /></label>
+            <label>Brand font
+              <select id="brand-font"><option>Inter</option><option>Georgia</option><option>Impact</option></select>
+            </label>
+            <label class="check"><input type="checkbox" id="brand-watermark" /> Show watermark</label>
+            <div class="btn-row">
+              <button class="btn" data-action="brand-save">Save kit</button>
+              <button class="btn primary" data-action="brand-apply">Apply to project</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <main class="center-stage" id="preview-stage">
+        <div class="preview-wrap" id="preview-wrap">
+          <div class="monitor" id="monitor">
+            <video id="preview-video" playsinline preload="metadata"></video>
+            <canvas id="overlay-canvas"></canvas>
+            <div id="crop-overlay" class="crop-overlay hidden"></div>
+            <div class="empty-preview" id="empty-preview">
+              <p>Upload a video to start editing.</p>
+              <p class="hint">Drag media here.</p>
+            </div>
+          </div>
+        </div>
+        <div class="player-bar" role="group" aria-label="Playback controls">
+          <button class="btn icon" data-player="prev-frame" title="Previous frame" aria-label="Previous frame">⏮</button>
+          <button class="btn icon" data-player="skip-back" title="Skip back 5s" aria-label="Skip backward">⏪</button>
+          <button class="btn icon play" data-player="toggle" title="Play/Pause (Space)" aria-label="Play or pause" id="btn-play">▶</button>
+          <button class="btn icon" data-player="stop" title="Stop" aria-label="Stop">⏹</button>
+          <button class="btn icon" data-player="skip-fwd" title="Skip forward 5s" aria-label="Skip forward">⏩</button>
+          <button class="btn icon" data-player="next-frame" title="Next frame" aria-label="Next frame">⏭</button>
+          <div class="time-readout"><span id="cur-time">00:00.00</span> / <span id="dur-time">00:00.00</span></div>
+          <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Progress" />
+          <label class="vol-mini">
+            <button class="btn icon" data-player="mute" aria-label="Mute">🔊</button>
+            <input type="range" id="player-volume" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+          </label>
+          <select id="playback-rate" aria-label="Playback speed">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+          </select>
+          <button class="btn icon" data-player="fullscreen" title="Fullscreen" aria-label="Fullscreen">⛶</button>
+        </div>
+        <div class="trim-bar">
+          <label>Start <input type="number" id="trim-start" min="0" step="0.01" value="0" /></label>
+          <input type="range" id="trim-start-range" min="0" max="1000" value="0" aria-label="Start time slider" />
+          <label>End <input type="number" id="trim-end" min="0" step="0.01" value="0" /></label>
+          <input type="range" id="trim-end-range" min="0" max="1000" value="1000" aria-label="End time slider" />
+          <label class="check"><input type="checkbox" id="preview-trim" /> Preview selected portion</label>
+          <button class="btn" data-action="reset-trim">Reset trim</button>
+          <button class="btn primary" data-action="apply-trim">Apply trim</button>
+        </div>
+      </main>
+
+      <aside class="sidebar right-sidebar" id="right-sidebar" aria-label="Properties">
+        <nav class="tool-tabs" role="tablist">
+          <button class="tool-tab active" data-rpanel="props">Properties</button>
+          <button class="tool-tab" data-rpanel="video">Video</button>
+          <button class="tool-tab" data-rpanel="audio">Audio</button>
+          <button class="tool-tab" data-rpanel="text">Text</button>
+          <button class="tool-tab" data-rpanel="effects">Effects</button>
+          <button class="tool-tab" data-rpanel="assistant">AI Assistant</button>
+        </nav>
+        <div class="panel-stack">
+          <section class="tool-panel active" id="rpanel-props">
+            <h2>Properties</h2>
+            <dl class="kv" id="clip-props">
+              <dt>Selection</dt><dd id="prop-sel">None</dd>
+              <dt>Duration</dt><dd id="prop-dur">—</dd>
+              <dt>Resolution</dt><dd id="prop-res">—</dd>
+            </dl>
+          </section>
+          <section class="tool-panel" id="rpanel-video" hidden>
+            <h2>Video</h2>
+            <h3>Crop</h3>
+            <div class="chip-grid" id="crop-presets"></div>
+            <button class="btn" data-action="reset-crop">Reset crop</button>
+            <h3>Resize</h3>
+            <select id="resize-preset"></select>
+            <div class="row-2">
+              <label>W <input type="number" id="custom-w" min="16" max="7680" value="1920" /></label>
+              <label>H <input type="number" id="custom-h" min="16" max="4320" value="1080" /></label>
+            </div>
+            <button class="btn" data-action="apply-resize">Apply canvas size</button>
+            <h3>Rotate &amp; flip</h3>
+            <div class="btn-row wrap">
+              <button class="btn" data-action="rot-left">90° left</button>
+              <button class="btn" data-action="rot-right">90° right</button>
+              <button class="btn" data-action="rot-180">180°</button>
+              <button class="btn" data-action="flip-h">Flip H</button>
+              <button class="btn" data-action="flip-v">Flip V</button>
+            </div>
+            <h3>Clip speed</h3>
+            <select id="clip-speed">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </section>
+          <section class="tool-panel" id="rpanel-audio" hidden>
+            <h2>Audio</h2>
+            <p class="hint">Clip-level audio. Use the left Audio panel for library and voice-over.</p>
+            <label>Clip volume <span id="clip-vol-label">100%</span>
+              <input type="range" id="clip-volume" min="0" max="200" value="100" />
+            </label>
+          </section>
+          <section class="tool-panel" id="rpanel-text" hidden>
+            <h2>Text layer</h2>
+            <p class="hint">Select a text clip on the timeline to edit.</p>
+            <label>X % <input type="number" id="text-x" value="50" /></label>
+            <label>Y % <input type="number" id="text-y" value="80" /></label>
+            <label>Shadow <input type="color" id="text-shadow" value="#000000" /></label>
+            <label>Border <input type="color" id="text-border" value="#000000" /></label>
+          </section>
+          <section class="tool-panel" id="rpanel-effects" hidden>
+            <h2>Effects</h2>
+            <p id="fx-summary" class="hint">No effect on selected clip.</p>
+          </section>
+          <section class="tool-panel" id="rpanel-assistant" hidden>
+            <h2>AI Editing Assistant</h2>
+            <p class="hint">Supported local commands run immediately. Cloud commands need an API in Settings.</p>
+            <label for="ai-prompt">What would you like to do?</label>
+            <textarea id="ai-prompt" rows="3" placeholder="Make this video brighter"></textarea>
+            <button class="btn primary" data-action="ai-run">Run</button>
+            <div class="suggest">
+              <button type="button" data-ai-cmd="Remove silent parts">Remove silent parts</button>
+              <button type="button" data-ai-cmd="Add subtitles">Add subtitles</button>
+              <button type="button" data-ai-cmd="Make this video brighter">Make this video brighter</button>
+              <button type="button" data-ai-cmd="Create a 30-second highlight">Create a 30-second highlight</button>
+              <button type="button" data-ai-cmd="Convert this to YouTube Shorts">Convert this to YouTube Shorts</button>
+              <button type="button" data-ai-cmd="Add professional captions">Add professional captions</button>
+              <button type="button" data-ai-cmd="Remove background noise">Remove background noise</button>
+              <button type="button" data-ai-cmd="Create a promotional video">Create a promotional video</button>
+              <button type="button" data-ai-cmd="Translate subtitles to Bangla">Translate subtitles to Bangla</button>
+              <button type="button" data-ai-cmd="Make the video cinematic">Make the video cinematic</button>
+            </div>
+            <pre id="ai-log" class="ai-log" aria-live="polite"></pre>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <section class="timeline-panel" aria-label="Timeline">
+      <div class="timeline-toolbar">
+        <button class="btn" data-action="split" title="Split at playhead">Split</button>
+        <button class="btn" data-action="cut">Cut</button>
+        <button class="btn" data-action="delete-clip">Delete</button>
+        <button class="btn" data-action="duplicate">Duplicate</button>
+        <button class="btn" data-action="copy">Copy</button>
+        <button class="btn" data-action="paste">Paste</button>
+        <label class="check"><input type="checkbox" id="snap" checked /> Snap</label>
+        <span class="spacer"></span>
+        <button class="btn" data-action="zoom-out" aria-label="Zoom out">−</button>
+        <select id="tl-zoom" aria-label="Timeline zoom">
+          <option value="0.25">25%</option>
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="1" selected>100%</option>
+          <option value="1.5">150%</option>
+          <option value="2">200%</option>
+          <option value="4">400%</option>
+        </select>
+        <button class="btn" data-action="zoom-in" aria-label="Zoom in">+</button>
+        <button class="btn" data-action="fit-timeline">Fit</button>
+      </div>
+      <div class="timeline-scroll" id="timeline-scroll">
+        <div class="time-ruler" id="time-ruler"></div>
+        <div id="tracks" class="tracks"></div>
+        <div id="playhead" class="playhead" aria-hidden="true"></div>
+        <p class="empty-hint timeline-empty" id="timeline-empty">Your timeline is empty.</p>
+      </div>
+    </section>
+
+    <nav class="mobile-toolbar" aria-label="Mobile tools">
+      <button data-mobile="media">Media</button>
+      <button data-mobile="timeline">Timeline</button>
+      <button data-mobile="props">Props</button>
+      <button data-mobile="export">Export</button>
+    </nav>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-action="close-modal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <div class="loading-veil" id="loading-veil" hidden>
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="loading-text">Loading…</p>
+    <progress id="loading-progress" max="100" value="0"></progress>
+    <button class="btn" id="loading-cancel" hidden>Cancel</button>
+  </div>
+
+  <script>
+    window.AIVE_CONFIG = {
+      maxUploadMB: 512,
+      ffmpeg: {
+        enabled: true,
+        cdn: "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js",
+        corePath: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/"
+      },
+      ai: {
+        speechToTextUrl: "",
+        translateUrl: "",
+        assistantUrl: "",
+        highlightUrl: "",
+        thumbnailUrl: ""
+      },
+      backend: { baseUrl: "" }
+    };
+  </script>
+  <script src="js/app.js"></script>
+  <script src="js/video-editor.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/screen-recorder.js"></script>
+  <script src="js/subtitles.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/ai.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", () => window.App.init());</script>
+</body>
+</html>
