@@ -285,7 +285,7 @@
         }
       }
 
-      // 1. Freeze Frame / Image Clips
+      // 1. Freeze Frame / Image Clips (with Ken Burns, Transitions & Filters)
       const imgClip = Editor.project.clips.find(
         (c) => c.type === "image" && t >= c.start && t < c.start + c.duration
       );
@@ -300,7 +300,51 @@
             this._exportImgCache.set(imgClip.sourceId, img);
           }
           if (img.complete && img.naturalWidth) {
-            ctx.drawImage(img, 0, 0, w, h);
+            ctx.save();
+            ctx.filter = EffectsStudio.filterCss(imgClip);
+
+            let alpha = 1;
+            const transDur = imgClip.transDur || 0.6;
+            if (imgClip.transition && imgClip.transition !== "none") {
+              if (t - imgClip.start < transDur) {
+                alpha = Math.min(1, Math.max(0, (t - imgClip.start) / transDur));
+              }
+            }
+            if (imgClip.fadeIn && t - imgClip.start < imgClip.fadeIn) {
+              alpha = Math.min(alpha, (t - imgClip.start) / imgClip.fadeIn);
+            }
+            const timeLeft = (imgClip.start + imgClip.duration) - t;
+            if (imgClip.fadeOut && timeLeft < imgClip.fadeOut) {
+              alpha = Math.min(alpha, timeLeft / imgClip.fadeOut);
+            }
+            ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+            const progress = Math.min(1, Math.max(0, (t - imgClip.start) / (imgClip.duration || 1)));
+            const ken = imgClip.kenBurns || "zoomIn";
+            let scale = 1.0;
+            let offsetX = 0;
+            let offsetY = 0;
+            if (ken === "zoomIn") scale = 1.0 + (0.16 * progress);
+            else if (ken === "zoomOut") scale = 1.16 - (0.16 * progress);
+            else if (ken === "panLeft") { scale = 1.12; offsetX = (0.05 - 0.1 * progress) * w; }
+            else if (ken === "panRight") { scale = 1.12; offsetX = (-0.05 + 0.1 * progress) * w; }
+
+            ctx.translate(w / 2 + offsetX, h / 2 + offsetY);
+            if (imgClip.rotate) ctx.rotate((imgClip.rotate * Math.PI) / 180);
+            ctx.scale(imgClip.flipH ? -scale : scale, imgClip.flipV ? -scale : scale);
+
+            const imgAspect = img.naturalWidth / img.naturalHeight;
+            const canvasAspect = w / h;
+            let drawW, drawH;
+            if (imgAspect > canvasAspect) {
+              drawH = h;
+              drawW = h * imgAspect;
+            } else {
+              drawW = w;
+              drawH = w / imgAspect;
+            }
+            ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
           }
         }
       }

@@ -42,6 +42,12 @@
         <span id="project-meta" class="project-meta">1920×1080 · 30fps</span>
       </div>
       <div class="header-right">
+        <select id="workspace-layout-select" class="btn ghost" style="padding: 5px 8px; font-size: 11px; font-weight: 600;" title="Workspace Layout Preset (প্যানেল লেআউট পরিবর্তন করুন)">
+          <option value="default">🎛️ Default Layout</option>
+          <option value="theater">🎬 Big Preview (থিয়েটার)</option>
+          <option value="timeline">⏱️ Timeline Focus</option>
+          <option value="media">📁 Media Focus</option>
+        </select>
         <button class="btn ghost cmd-btn" data-action="open-cmd" title="Quick Command Palette (Ctrl+K)">⚡ Cmd (Ctrl+K)</button>
         <button class="btn ghost" data-action="open-help" title="Help" aria-label="Help">Help</button>
         <button class="btn ghost" data-action="open-settings" title="Settings" aria-label="Settings">Settings</button>
@@ -69,13 +75,62 @@
 
         <div class="panel-stack">
           <section class="tool-panel active" id="panel-media" role="tabpanel">
-            <h2>Media</h2>
-            <div class="dropzone" id="media-dropzone" tabindex="0" role="button" aria-label="Upload videos">
-              <strong>Drag &amp; Drop Your Video Here</strong>
-              <p>MP4, WebM, MOV, AVI, MKV (browser support varies)</p>
-              <button class="btn primary" type="button" id="browse-files">Browse Files</button>
-              <input id="file-input" type="file" accept="video/*,.mkv,.mov,.avi" multiple hidden />
+            <h2>Media &amp; Photos</h2>
+            <div class="dropzone" id="media-dropzone" tabindex="0" role="button" aria-label="Upload videos or photos">
+              <strong>Drag &amp; Drop Videos or Photos Here</strong>
+              <p>MP4, WebM, MOV, PNG, JPG, WEBP, GIF (ছবি দিয়ে ভিডিও বানান)</p>
+              <div class="btn-row" style="margin-top:6px;">
+                <button class="btn primary" type="button" id="browse-files">Browse Files</button>
+                <button class="btn primary-accent" type="button" onclick="document.getElementById('file-input').click();">📸 Upload Photos</button>
+              </div>
+              <input id="file-input" type="file" accept="video/*,image/*,.mkv,.mov,.avi,.mp4,.webm,.png,.jpg,.jpeg,.webp,.gif,.bmp" multiple hidden />
             </div>
+
+            <!-- Photo to Video Slideshow Studio Card -->
+            <div class="photo-video-card" style="margin-top:10px; background:rgba(99,102,241,0.08); border:1px dashed rgba(99,102,241,0.35); border-radius:10px; padding:12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <strong style="color:var(--text-bright); font-size:12px;">📸 ছবি দিয়ে ভিডিও তৈরি (Photo to Video)</strong>
+                <span class="status-pill">Slideshow AI</span>
+              </div>
+              <p class="hint" style="margin:0 0 10px 0; font-size:11px;">ছবি আপলোড করে ১-ক্লিকেই সিনেমাটিক মোশন ভিডিও ও স্লাইডশো তৈরি করুন।</p>
+              <div class="row-2">
+                <label>ছবির স্থায়িত্ব (Duration)
+                  <select id="slideshow-duration">
+                    <option value="2">২ সেকেন্ড (দ্রুত)</option>
+                    <option value="3" selected>৩ সেকেন্ড (স্ট্যান্ডার্ড)</option>
+                    <option value="4">৪ সেকেন্ড</option>
+                    <option value="5">৫ সেকেন্ড (ধীর)</option>
+                  </select>
+                </label>
+                <label>মোশন (Ken Burns)
+                  <select id="slideshow-motion">
+                    <option value="zoomIn" selected>🔍 Zoom In (জুম ইন)</option>
+                    <option value="zoomOut">🔎 Zoom Out (জুম আউট)</option>
+                    <option value="panLeft">⬅️ Pan Left (প্যান বাম)</option>
+                    <option value="panRight">➡️ Pan Right (প্যান ডান)</option>
+                    <option value="static">Static (স্থির)</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row-2" style="margin-top:6px;">
+                <label>ট্রানজিশন (Transition)
+                  <select id="slideshow-trans">
+                    <option value="fade" selected>Smooth Dissolve / Fade</option>
+                    <option value="crossfade">Crossfade</option>
+                    <option value="none">Direct Cut</option>
+                  </select>
+                </label>
+                <label class="check" style="margin-top:18px;">
+                  <input type="checkbox" id="slideshow-bgm" checked /> 🎵 ব্যাকগ্রাউন্ড মিউজিক
+                </label>
+              </div>
+              <div class="btn-row" style="margin-top:10px;">
+                <button class="btn primary-accent" type="button" onclick="PhotoVideoMaker.createSlideshow()" style="width:100%; font-weight:700;">
+                  🎬 ছবিগুলো দিয়ে ভিডিও তৈরি করুন (Create Video)
+                </button>
+              </div>
+            </div>
+
             <div class="recorder-card">
               <div class="recorder-head"><div><strong>Capture Studio</strong><p class="hint">Record your screen, webcam and microphone directly into the editor.</p></div><span id="sr-status" class="status-pill">Ready</span></div>
               <div class="row-2">
@@ -92,7 +147,7 @@
               </div>
             </div>
             <div class="media-list" id="media-list"></div>
-            <p class="empty-hint" id="media-empty">Upload a video to start editing.</p>
+            <p class="empty-hint" id="media-empty">Upload a video or photo to start editing.</p>
           </section>
 
           <section class="tool-panel" id="panel-audio" role="tabpanel" hidden>
@@ -181,19 +236,34 @@
             <h3>Text Content &amp; Multilingual Typography</h3>
             <div class="lang-pills btn-row" style="margin-bottom: 8px;">
               <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('bn')">🇧🇩 বাংলা</button>
+              <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('bijoy')">🇧🇩 বিজয় (SutonnyMJ)</button>
               <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('en')">🇬🇧 English</button>
               <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('ar')">🇸🇦 العربية (RTL)</button>
             </div>
+
+            <!-- Bijoy (SutonnyMJ) ⇄ Unicode Converter Toolbar -->
+            <div class="bijoy-toolbar" style="display:flex; gap:6px; align-items:center; margin-bottom:8px; flex-wrap:wrap; background:rgba(15,23,42,0.8); padding:7px 10px; border-radius:8px; border:1px solid rgba(99,102,241,0.35);">
+              <span style="font-weight:700; color:var(--accent); font-size:11px;">🇧🇩 বিজয় ⇄ ইউনিকোড:</span>
+              <button class="btn" type="button" onclick="TextStudio.convertBijoyToUnicode()" title="বিজয় (SutonnyMJ) লেখা থেকে ইউনিকোডে রূপান্তর করুন">🔄 বিজয় ➔ ইউনিকোড</button>
+              <button class="btn" type="button" onclick="TextStudio.convertUnicodeToBijoy()" title="ইউনিকোড লেখা থেকে বিজয়ে (SutonnyMJ) রূপান্তর করুন">🔄 ইউনিকোড ➔ বিজয়</button>
+              <label class="check" style="margin-left:auto; font-size:11px; color:var(--muted);" title="টাইপ বা পেস্ট করার সময় স্বয়ংক্রিয়ভাবে বিজয় সনাক্ত করে রূপান্তর করবে">
+                <input type="checkbox" id="bijoy-auto-detect" checked /> অটো ডিটেক্ট
+              </label>
+            </div>
+
             <label>Content (Multiline supported)
-              <textarea id="text-content" rows="3" dir="auto" placeholder="বাংলা, English, অথবা العربية লিখুন…"></textarea>
+              <textarea id="text-content" rows="3" dir="auto" placeholder="বাংলা (ইউনিকোড বা বিজয় SutonnyMJ), English, অথবা العربية লিখুন…"></textarea>
             </label>
 
             <div class="row-2">
               <label>Font Family
                 <select id="text-font">
-                  <optgroup label="🇧🇩 বাংলা (Bangla)">
+                  <optgroup label="🇧🇩 বাংলা ও বিজয় (Bangla &amp; Bijoy)">
                     <option value="Hind Siliguri" selected>Hind Siliguri (হিন্দ শিলিগুড়ি - Clean)</option>
+                    <option value="Hind Siliguri">SutonnyMJ / বিজয় (কনভার্টেড)</option>
                     <option value="Noto Sans Bengali">Noto Sans Bengali (নোটো সান্স)</option>
+                    <option value="Hind Siliguri">Kalpurush (কালপুরুষ)</option>
+                    <option value="Hind Siliguri">SolaimanLipi (সোলাইমান লিপি)</option>
                   </optgroup>
                   <optgroup label="🇸🇦 العربية (Arabic - RTL)">
                     <option value="Cairo">Cairo (القاهرة - Modern Bold)</option>
@@ -439,6 +509,8 @@
         </div>
       </aside>
 
+      <div class="panel-resizer resizer-left" id="resizer-left" title="Drag horizontally to resize Left Panel (Double-click to reset)" role="separator" aria-orientation="vertical" tabindex="0"></div>
+
       <main class="center-stage" id="preview-stage">
         <!-- Studio Stage Toolbar -->
         <div class="stage-toolbar" id="stage-toolbar" role="toolbar" aria-label="Monitor and Canvas Controls">
@@ -512,6 +584,8 @@
           <button class="btn primary" data-action="apply-trim">Apply trim</button>
         </div>
       </main>
+
+      <div class="panel-resizer resizer-right" id="resizer-right" title="Drag horizontally to resize Right Panel (Double-click to reset)" role="separator" aria-orientation="vertical" tabindex="0"></div>
 
       <aside class="sidebar right-sidebar" id="right-sidebar" aria-label="Properties">
         <nav class="tool-tabs" role="tablist">
@@ -634,9 +708,12 @@
             <div class="row-2">
               <label>Font
                 <select id="rtext-font">
-                  <optgroup label="🇧🇩 বাংলা (Bangla)">
+                  <optgroup label="🇧🇩 বাংলা ও বিজয় (Bangla &amp; Bijoy)">
                     <option value="Hind Siliguri">Hind Siliguri (বাংলা)</option>
+                    <option value="Hind Siliguri">SutonnyMJ / বিজয় (কনভার্টেড)</option>
                     <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+                    <option value="Hind Siliguri">Kalpurush (কালপুরুষ)</option>
+                    <option value="Hind Siliguri">SolaimanLipi (সোলাইমান লিপি)</option>
                   </optgroup>
                   <optgroup label="🇸🇦 العربية (Arabic - RTL)">
                     <option value="Cairo">Cairo (العربية)</option>
@@ -710,6 +787,8 @@
         </div>
       </aside>
     </div>
+
+    <div class="panel-resizer resizer-timeline" id="resizer-timeline" title="Drag vertically to resize Timeline height (Double-click to reset)" role="separator" aria-orientation="horizontal" tabindex="0"></div>
 
     <section class="timeline-panel" aria-label="Timeline">
       <div class="timeline-toolbar">
@@ -797,6 +876,7 @@
   <script src="js/effects.js"></script>
   <script src="js/export.js"></script>
   <script src="js/ai.js"></script>
+  <script src="js/bijoy-converter.js"></script>
   <script src="js/uncommon-features.js"></script>
   <script>document.addEventListener("DOMContentLoaded", () => window.App.init());</script>
 </body>

@@ -25,6 +25,8 @@
   --radius-lg: 14px;
   --header-h: 56px;
   --timeline-h: 230px;
+  --left-panel-w: 290px;
+  --right-panel-w: 290px;
   --mobile-bar: 56px;
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -234,9 +236,81 @@ img, svg, video, canvas { max-width: 100%; }
 .workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: 290px minmax(0,1fr) 290px;
+  grid-template-columns: var(--left-panel-w, 290px) 6px minmax(0, 1fr) 6px var(--right-panel-w, 290px);
   min-height: 0;
   position: relative;
+  overflow: hidden;
+}
+
+/* Draggable Panel Resizers */
+.panel-resizer {
+  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+  z-index: 15;
+  user-select: none;
+  touch-action: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.panel-resizer::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.panel-resizer.resizer-left,
+.panel-resizer.resizer-right {
+  cursor: col-resize;
+  width: 6px;
+  height: 100%;
+}
+
+.panel-resizer.resizer-left::after,
+.panel-resizer.resizer-right::after {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 38px;
+}
+
+.panel-resizer.resizer-timeline {
+  cursor: row-resize;
+  height: 6px;
+  width: 100%;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.panel-resizer.resizer-timeline::after {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 54px;
+  height: 3px;
+}
+
+.panel-resizer:hover,
+.panel-resizer.resizing {
+  background: rgba(99, 102, 241, 0.28) !important;
+}
+
+.panel-resizer:hover::after,
+.panel-resizer.resizing::after {
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+body.is-resizing-col {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.is-resizing-row {
+  cursor: row-resize !important;
+  user-select: none !important;
 }
 
 /* Sidebars */
@@ -247,9 +321,10 @@ img, svg, video, canvas { max-width: 100%; }
   border-width: 0;
   display: flex; flex-direction: column; min-height: 0;
   z-index: 5;
+  overflow: hidden;
 }
-.left-sidebar { border-right-width: 1px; }
-.right-sidebar { border-left-width: 1px; }
+.left-sidebar { border-right-width: 0; }
+.right-sidebar { border-left-width: 0; }
 
 .tool-tabs {
   display: flex; flex-wrap: wrap; gap: 4px;

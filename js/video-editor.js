@@ -5,8 +5,10 @@
 (function (global) {
   "use strict";
 
-  const ACCEPT = /\.(mp4|webm|mov|avi|mkv|m4v|ogv)$/i;
-  const MIME_OK = /^video\//;
+  const ACCEPT = /\.(mp4|webm|mov|avi|mkv|m4v|ogv|png|jpe?g|webp|gif|bmp|svg)$/i;
+  const MIME_OK = /^(video|image)\//;
+  const ACCEPT_IMG = /\.(png|jpe?g|webp|gif|bmp|svg)$/i;
+  const MIME_IMG = /^image\//;
 
   const Player = {
     video: null,
@@ -126,13 +128,18 @@
 
     play() {
       Editor.playing = true;
+      this._lastTick = performance.now();
       document.getElementById("btn-play").textContent = "⏸";
       this.tick();
-      this.video.play().catch(() => {});
+      const clip = this.activeVideoClip();
+      if (clip && clip.type === "video") {
+        this.video.play().catch(() => {});
+      }
     },
 
     pause() {
       Editor.playing = false;
+      this._lastTick = null;
       document.getElementById("btn-play").textContent = "▶";
       this.video.pause();
       if (this._audioPool) {
@@ -143,6 +150,23 @@
 
     tick() {
       if (!Editor.playing) return;
+      const now = performance.now();
+      if (!this._lastTick) this._lastTick = now;
+      const dt = (now - this._lastTick) / 1000;
+      this._lastTick = now;
+
+      const clip = this.activeVideoClip();
+      if (clip && clip.type === "image") {
+        Editor.playhead += dt * this.rate;
+        const totalDur = Editor.duration() || 1;
+        if (Editor.playhead >= totalDur) {
+          Editor.playhead = 0;
+          this.pause();
+        }
+        this.updateChrome();
+        Timeline.updatePlayhead();
+      }
+
       this.sync();
       Overlay.draw();
       this.raf = requestAnimationFrame(() => this.tick());
@@ -150,7 +174,7 @@
 
     onTime() {
       const clip = this.activeVideoClip();
-      if (clip && this.video === document.getElementById("preview-video")) {
+      if (clip && clip.type === "video" && this.video === document.getElementById("preview-video")) {
         const local = this.video.currentTime;
         Editor.playhead = clip.start + (local - clip.inPoint) / (clip.speed || 1);
       }
@@ -174,7 +198,7 @@
     activeVideoClip() {
       return Editor.project.clips.find(
         (c) =>
-          c.type === "video" &&
+          (c.type === "video" || c.type === "image") &&
           !this.trackMuted(c.track) &&
           Editor.playhead >= c.start &&
           Editor.playhead < c.start + c.duration
@@ -183,7 +207,7 @@
 
     clipAt(t) {
       return Editor.project.clips
-        .filter((c) => c.type === "video" && t >= c.start && t < c.start + c.duration)
+        .filter((c) => (c.type === "video" || c.type === "image") && t >= c.start && t < c.start + c.duration)
         .sort((a, b) => (a.track === "v2" ? 1 : 0) - (b.track === "v2" ? 1 : 0))
         .pop();
     },
@@ -210,6 +234,14 @@
         return;
       }
       empty.classList.add("hidden");
+      if (clip.type === "image") {
+        if (!this.video.paused) this.video.pause();
+        this.video.style.opacity = "0";
+        this.syncAudio(forceSeek);
+        this.updateChrome();
+        return;
+      }
+      this.video.style.opacity = "1";
       const media = Editor.media.get(clip.sourceId);
       if (!media) return;
       const url = media.url;
@@ -298,6 +330,15 @@
         this.updateChrome();
         return;
       }
+      if (media.isImage || (media.info && media.info.type === "image")) {
+        this.video.style.opacity = "0";
+        this.video.dataset.srcId = media.id;
+        document.getElementById("empty-preview").classList.add("hidden");
+        Overlay.draw();
+        this.updateChrome();
+        return;
+      }
+      this.video.style.opacity = "1";
       this.video.src = media.url;
       this.video.dataset.srcId = media.id;
       document.getElementById("empty-preview").classList.add("hidden");
@@ -439,9 +480,72 @@
         img.src = m.url;
         this._imgCache.set(c.sourceId, img);
       }
-      if (img.complete && img.naturalWidth) {
-        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+      if (!img.complete || !img.naturalWidth) return;
+
+      const ctx = this.ctx;
+      const cw = this.canvas.width;
+      const ch = this.canvas.height;
+      const t = Editor.playhead;
+      const progress = Math.min(1, Math.max(0, (t - c.start) / (c.duration || 1)));
+
+      ctx.save();
+
+      // Filters
+      ctx.filter = EffectsStudio.filterCss(c);
+
+      // Transitions & Fades
+      let alpha = 1;
+      const transDur = c.transDur || 0.6;
+      if (c.transition && c.transition !== "none") {
+        if (t - c.start < transDur) {
+          alpha = Math.min(1, Math.max(0, (t - c.start) / transDur));
+        }
       }
+      if (c.fadeIn && t - c.start < c.fadeIn) {
+        alpha = Math.min(alpha, (t - c.start) / c.fadeIn);
+      }
+      const timeLeft = (c.start + c.duration) - t;
+      if (c.fadeOut && timeLeft < c.fadeOut) {
+        alpha = Math.min(alpha, timeLeft / c.fadeOut);
+      }
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+      // Ken Burns Motion Effect
+      const ken = c.kenBurns || "zoomIn";
+      let scale = 1.0;
+      let offsetX = 0;
+      let offsetY = 0;
+      if (ken === "zoomIn") {
+        scale = 1.0 + (0.16 * progress);
+      } else if (ken === "zoomOut") {
+        scale = 1.16 - (0.16 * progress);
+      } else if (ken === "panLeft") {
+        scale = 1.12;
+        offsetX = (0.05 - 0.1 * progress) * cw;
+      } else if (ken === "panRight") {
+        scale = 1.12;
+        offsetX = (-0.05 + 0.1 * progress) * cw;
+      }
+
+      // Center & transform
+      ctx.translate(cw / 2 + offsetX, ch / 2 + offsetY);
+      if (c.rotate) ctx.rotate((c.rotate * Math.PI) / 180);
+      ctx.scale(c.flipH ? -scale : scale, c.flipV ? -scale : scale);
+
+      // Aspect cover calculation
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      const canvasAspect = cw / ch;
+      let drawW, drawH;
+      if (imgAspect > canvasAspect) {
+        drawH = ch;
+        drawW = ch * imgAspect;
+      } else {
+        drawW = cw;
+        drawH = cw / imgAspect;
+      }
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+      ctx.restore();
     },
 
     drawPipClips(ctx, w, h, t) {
@@ -834,6 +938,9 @@
     },
 
     addFile(file) {
+      if (MIME_IMG.test(file.type) || ACCEPT_IMG.test(file.name)) {
+        return this.addImageFile(file);
+      }
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
         const v = document.createElement("video");
@@ -863,7 +970,7 @@
           Editor.media.set(id, rec);
           this.renderMediaCard(rec);
           document.getElementById("media-empty").hidden = true;
-          const last = Editor.project.clips.filter((c) => c.type === "video").reduce((m, c) => Math.max(m, c.start + c.duration), 0);
+          const last = Editor.project.clips.filter((c) => c.type === "video" || c.type === "image").reduce((m, c) => Math.max(m, c.start + c.duration), 0);
           const clip = {
             id: uid("clip"),
             type: "video",
@@ -888,7 +995,7 @@
             fadeIn: 0,
             fadeOut: 0
           };
-          if (!Editor.project.clips.some((c) => c.type === "video")) {
+          if (!Editor.project.clips.some((c) => c.type === "video" || c.type === "image")) {
             if (info.width) {
               Editor.project.width = info.width;
               Editor.project.height = info.height;
@@ -902,6 +1009,75 @@
       });
     },
 
+    addImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const id = uid("media");
+          const defaultDuration = 4.0;
+          const info = {
+            name: file.name,
+            size: file.size,
+            type: "image",
+            duration: defaultDuration,
+            width: img.naturalWidth || 1920,
+            height: img.naturalHeight || 1080
+          };
+          const rec = { id, file, blob: file, url, info, isImage: true };
+          Editor.media.set(id, rec);
+          this.renderMediaCard(rec);
+          document.getElementById("media-empty").hidden = true;
+
+          const last = Editor.project.clips
+            .filter((c) => c.type === "video" || c.type === "image")
+            .reduce((m, c) => Math.max(m, c.start + c.duration), 0);
+
+          const clip = {
+            id: uid("clip"),
+            type: "image",
+            track: "v1",
+            sourceId: id,
+            start: last,
+            inPoint: 0,
+            outPoint: defaultDuration,
+            duration: defaultDuration,
+            speed: 1,
+            rotate: 0,
+            flipH: false,
+            flipV: false,
+            filter: "original",
+            filterIntensity: 1,
+            adjustments: EffectsStudio.defaultAdjust(),
+            effect: "none",
+            intensity: 50,
+            transition: "fade",
+            transDur: 0.6,
+            fadeIn: 0.3,
+            fadeOut: 0.3,
+            kenBurns: "zoomIn"
+          };
+
+          if (!Editor.project.clips.some((c) => c.type === "video" || c.type === "image")) {
+            if (info.width && info.height) {
+              Editor.project.width = info.width;
+              Editor.project.height = info.height;
+            }
+          }
+          Editor.addClip(clip);
+          Player.load(rec);
+          Overlay.draw();
+          Timeline.render();
+          resolve(rec);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Image decode failed"));
+        };
+        img.src = url;
+      });
+    },
+
     renderMediaCard(rec) {
       const list = document.getElementById("media-list");
       const card = document.createElement("article");
@@ -909,16 +1085,26 @@
       card.tabIndex = 0;
       card.draggable = true;
       card.addEventListener("dragstart", (e) => { e.dataTransfer.setData("application/x-aive-media", rec.id); e.dataTransfer.effectAllowed = "copy"; });
-      const thumb = document.createElement("video");
-      thumb.src = rec.url;
-      thumb.muted = true;
-      thumb.preload = "metadata";
+      
+      let thumb;
+      const isImg = rec.isImage || (rec.info && rec.info.type === "image");
+      if (isImg) {
+        thumb = document.createElement("img");
+        thumb.src = rec.url;
+        thumb.style.objectFit = "cover";
+      } else {
+        thumb = document.createElement("video");
+        thumb.src = rec.url;
+        thumb.muted = true;
+        thumb.preload = "metadata";
+      }
+
       const meta = document.createElement("div");
       meta.className = "meta";
       const i = rec.info;
-      meta.innerHTML = `<strong title="${i.name}">${i.name}</strong>
+      meta.innerHTML = `<strong title="${i.name}">${isImg ? "🖼️ " : "🎬 "}${i.name}</strong>
         ${formatTime(i.duration)} · ${i.width}×${i.height}<br/>
-        ${formatBytes(i.size)} · ${(i.type.split("/")[1] || "video").toUpperCase()}`;
+        ${formatBytes(i.size)} · ${isImg ? "PHOTO" : (i.type.split("/")[1] || "video").toUpperCase()}`;
       card.append(thumb, meta);
       card.addEventListener("click", () => {
         Player.load(rec);

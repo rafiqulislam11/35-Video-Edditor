@@ -1043,7 +1043,14 @@
       { id: "theme_midnight", title: "Theme: Midnight Blue", category: "Theme", icon: "🌌", action: () => UI.applyTheme("midnight") },
       { id: "theme_purple", title: "Theme: Cyber Purple", category: "Theme", icon: "🔮", action: () => UI.applyTheme("purple") },
       { id: "aspect_vertical", title: "Format: 9:16 (Shorts / Reels / TikTok)", category: "Canvas", icon: "📱", action: () => { document.getElementById("custom-w").value = 1080; document.getElementById("custom-h").value = 1920; VideoEditor.applyResize(); } },
-      { id: "aspect_landscape", title: "Format: 16:9 (YouTube Standard)", category: "Canvas", icon: "🖥️", action: () => { document.getElementById("custom-w").value = 1920; document.getElementById("custom-h").value = 1080; VideoEditor.applyResize(); } }
+      { id: "aspect_landscape", title: "Format: 16:9 (YouTube Standard)", category: "Canvas", icon: "🖥️", action: () => { document.getElementById("custom-w").value = 1920; document.getElementById("custom-h").value = 1080; VideoEditor.applyResize(); } },
+      { id: "convert_bijoy", title: "বিজয় থেকে ইউনিকোড (Convert Bijoy to Unicode)", category: "Text", icon: "🇧🇩", action: () => TextStudio.convertBijoyToUnicode() },
+      { id: "convert_unicode_bijoy", title: "ইউনিকোড থেকে বিজয় (Convert Unicode to Bijoy)", category: "Text", icon: "🇧🇩", action: () => TextStudio.convertUnicodeToBijoy() },
+      { id: "photo_slideshow", title: "ছবি দিয়ে ভিডিও তৈরি (Create Video from Photos)", category: "Media", icon: "📸", action: () => PhotoVideoMaker.createSlideshow() },
+      { id: "layout_default", title: "Reset Panel Layout (প্যানেল সাইজ ডিফল্ট)", category: "Workspace", icon: "🎛️", action: () => WorkspaceLayout.applyPreset("default") },
+      { id: "layout_theater", title: "Theater Mode (থিয়েটার মোড / Big Canvas)", category: "Workspace", icon: "🎬", action: () => WorkspaceLayout.applyPreset("theater") },
+      { id: "layout_timeline", title: "Timeline Focus (টাইমলাইন মোড)", category: "Workspace", icon: "⏱️", action: () => WorkspaceLayout.applyPreset("timeline") },
+      { id: "layout_media", title: "Media Library Focus (মিডিয়া ফোকাস)", category: "Workspace", icon: "📁", action: () => WorkspaceLayout.applyPreset("media") }
     ],
 
     init() {
@@ -1367,6 +1374,12 @@
       if (lang === "bn") {
         sample = "আপনার ভিডিওর জন্য আকর্ষণীয় বাংলা টেক্সট";
         font = "Hind Siliguri";
+      } else if (lang === "bijoy") {
+        sample = "Avcbvi wfwWIi Rb¨ AvKl©Yxq evsjv ‡UK&m&U";
+        if (global.BijoyConverter) {
+          sample = global.BijoyConverter.toUnicode(sample);
+        }
+        font = "Hind Siliguri";
       } else if (lang === "ar") {
         sample = "عنوان فيديو احترافي وجذاب";
         font = "Cairo";
@@ -1396,7 +1409,51 @@
         Overlay.draw();
         Timeline.render();
       }
-      UI.toast(`Language preset: ${lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'English'}`);
+      UI.toast(`Language preset: ${lang === 'bn' ? 'বাংলা' : lang === 'bijoy' ? 'বিজয় (SutonnyMJ)' : lang === 'ar' ? 'العربية' : 'English'}`);
+    },
+
+    convertBijoyToUnicode() {
+      const txtEl = document.getElementById("text-content");
+      if (!txtEl) return;
+      const current = txtEl.value;
+      if (!current) {
+        UI.toast("অনুগ্রহ করে কনভার্ট করার জন্য টেক্সট লিখুন");
+        return;
+      }
+      const converted = global.BijoyConverter ? global.BijoyConverter.toUnicode(current) : current;
+      txtEl.value = converted;
+      const rEl = document.getElementById("rtext-content");
+      if (rEl) rEl.value = converted;
+
+      const c = Editor.selected();
+      if (c && c.type === "text") {
+        c.text = converted;
+        Overlay.draw();
+        Timeline.render();
+      }
+      UI.toast("বিজয় (SutonnyMJ) থেকে ইউনিকোডে রূপান্তর সম্পন্ন!");
+    },
+
+    convertUnicodeToBijoy() {
+      const txtEl = document.getElementById("text-content");
+      if (!txtEl) return;
+      const current = txtEl.value;
+      if (!current) {
+        UI.toast("অনুগ্রহ করে কনভার্ট করার জন্য টেক্সট লিখুন");
+        return;
+      }
+      const converted = global.BijoyConverter ? global.BijoyConverter.toBijoy(current) : current;
+      txtEl.value = converted;
+      const rEl = document.getElementById("rtext-content");
+      if (rEl) rEl.value = converted;
+
+      const c = Editor.selected();
+      if (c && c.type === "text") {
+        c.text = converted;
+        Overlay.draw();
+        Timeline.render();
+      }
+      UI.toast("ইউনিকোড থেকে বিজয়ে (SutonnyMJ) রূপান্তর সম্পন্ন!");
     },
 
     renderUI() {
@@ -1449,6 +1506,33 @@
           el.addEventListener("change", () => this.updateClipFromUI(id));
         }
       });
+
+      // Auto-detect Bijoy on input or paste
+      const checkBijoyAuto = (el) => {
+        const auto = document.getElementById("bijoy-auto-detect");
+        if (auto && auto.checked && global.BijoyConverter) {
+          const val = el.value;
+          if (global.BijoyConverter.isBijoy(val)) {
+            const converted = global.BijoyConverter.toUnicode(val);
+            if (converted !== val) {
+              el.value = converted;
+              this.updateClipFromUI(el.id);
+              UI.toast("স্বয়ংক্রিয়ভাবে বিজয় থেকে ইউনিকোডে রূপান্তর করা হয়েছে");
+            }
+          }
+        }
+      };
+
+      const txt = document.getElementById("text-content");
+      if (txt) {
+        txt.addEventListener("paste", () => setTimeout(() => checkBijoyAuto(txt), 20));
+        txt.addEventListener("blur", () => checkBijoyAuto(txt));
+      }
+      const rtxt = document.getElementById("rtext-content");
+      if (rtxt) {
+        rtxt.addEventListener("paste", () => setTimeout(() => checkBijoyAuto(rtxt), 20));
+        rtxt.addEventListener("blur", () => checkBijoyAuto(rtxt));
+      }
 
       document.querySelectorAll("[data-text-style]").forEach((b) => {
         b.addEventListener("click", () => {
@@ -1786,6 +1870,275 @@
   };
 
   // ==========================================
+  // WORKSPACE DRAGGABLE PANEL LAYOUT ENGINE
+  // ==========================================
+  const WorkspaceLayout = {
+    init() {
+      this.restoreLayout();
+      this.bindResizers();
+      this.bindPresets();
+    },
+
+    restoreLayout() {
+      const leftW = localStorage.getItem("aive_left_w");
+      const rightW = localStorage.getItem("aive_right_w");
+      const timeH = localStorage.getItem("aive_timeline_h");
+
+      if (leftW) document.documentElement.style.setProperty("--left-panel-w", leftW + "px");
+      if (rightW) document.documentElement.style.setProperty("--right-panel-w", rightW + "px");
+      if (timeH) document.documentElement.style.setProperty("--timeline-h", timeH + "px");
+    },
+
+    bindResizers() {
+      const leftResizer = document.getElementById("resizer-left");
+      const rightResizer = document.getElementById("resizer-right");
+      const timeResizer = document.getElementById("resizer-timeline");
+
+      // 1. Left Panel Resizer
+      if (leftResizer) {
+        let isDragging = false;
+        leftResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          isDragging = true;
+          document.body.classList.add("is-resizing-col");
+          leftResizer.classList.add("resizing");
+
+          const onMove = (ev) => {
+            if (!isDragging) return;
+            const newW = Math.min(Math.max(180, ev.clientX), Math.min(window.innerWidth - 450, 600));
+            document.documentElement.style.setProperty("--left-panel-w", newW + "px");
+            localStorage.setItem("aive_left_w", newW);
+            Overlay.resize();
+          };
+
+          const onUp = () => {
+            isDragging = false;
+            document.body.classList.remove("is-resizing-col");
+            leftResizer.classList.remove("resizing");
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            Overlay.resize();
+          };
+
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        });
+
+        leftResizer.addEventListener("dblclick", () => {
+          document.documentElement.style.setProperty("--left-panel-w", "290px");
+          localStorage.removeItem("aive_left_w");
+          Overlay.resize();
+          UI.toast("বাম প্যানেল রিসেট করা হয়েছে (290px)");
+        });
+      }
+
+      // 2. Right Panel Resizer
+      if (rightResizer) {
+        let isDragging = false;
+        rightResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          isDragging = true;
+          document.body.classList.add("is-resizing-col");
+          rightResizer.classList.add("resizing");
+
+          const onMove = (ev) => {
+            if (!isDragging) return;
+            const newW = Math.min(Math.max(180, window.innerWidth - ev.clientX), Math.min(window.innerWidth - 450, 600));
+            document.documentElement.style.setProperty("--right-panel-w", newW + "px");
+            localStorage.setItem("aive_right_w", newW);
+            Overlay.resize();
+          };
+
+          const onUp = () => {
+            isDragging = false;
+            document.body.classList.remove("is-resizing-col");
+            rightResizer.classList.remove("resizing");
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            Overlay.resize();
+          };
+
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        });
+
+        rightResizer.addEventListener("dblclick", () => {
+          document.documentElement.style.setProperty("--right-panel-w", "290px");
+          localStorage.removeItem("aive_right_w");
+          Overlay.resize();
+          UI.toast("ডান প্যানেল রিসেট করা হয়েছে (290px)");
+        });
+      }
+
+      // 3. Timeline Resizer
+      if (timeResizer) {
+        let isDragging = false;
+        timeResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          isDragging = true;
+          document.body.classList.add("is-resizing-row");
+          timeResizer.classList.add("resizing");
+
+          const onMove = (ev) => {
+            if (!isDragging) return;
+            const newH = Math.min(Math.max(130, window.innerHeight - ev.clientY), Math.min(window.innerHeight - 250, 600));
+            document.documentElement.style.setProperty("--timeline-h", newH + "px");
+            localStorage.setItem("aive_timeline_h", newH);
+            Overlay.resize();
+            Timeline.render();
+          };
+
+          const onUp = () => {
+            isDragging = false;
+            document.body.classList.remove("is-resizing-row");
+            timeResizer.classList.remove("resizing");
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            Overlay.resize();
+            Timeline.render();
+          };
+
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        });
+
+        timeResizer.addEventListener("dblclick", () => {
+          document.documentElement.style.setProperty("--timeline-h", "230px");
+          localStorage.removeItem("aive_timeline_h");
+          Overlay.resize();
+          Timeline.render();
+          UI.toast("টাইমলাইন উচ্চতা রিসেট করা হয়েছে (230px)");
+        });
+      }
+    },
+
+    bindPresets() {
+      const sel = document.getElementById("workspace-layout-select");
+      if (!sel) return;
+      sel.addEventListener("change", (e) => {
+        this.applyPreset(e.target.value);
+      });
+    },
+
+    applyPreset(name) {
+      const sel = document.getElementById("workspace-layout-select");
+      if (sel) sel.value = name;
+
+      if (name === "theater") {
+        document.documentElement.style.setProperty("--left-panel-w", "200px");
+        document.documentElement.style.setProperty("--right-panel-w", "200px");
+        document.documentElement.style.setProperty("--timeline-h", "160px");
+        UI.toast("🎬 থিয়েটার মোড (Big Canvas Mode) সক্রিয় করা হয়েছে");
+      } else if (name === "timeline") {
+        document.documentElement.style.setProperty("--left-panel-w", "240px");
+        document.documentElement.style.setProperty("--right-panel-w", "240px");
+        document.documentElement.style.setProperty("--timeline-h", "360px");
+        UI.toast("⏱️ টাইমলাইন ফোকাস মোড সক্রিয় করা হয়েছে");
+      } else if (name === "media") {
+        document.documentElement.style.setProperty("--left-panel-w", "420px");
+        document.documentElement.style.setProperty("--right-panel-w", "220px");
+        document.documentElement.style.setProperty("--timeline-h", "200px");
+        UI.toast("📁 মিডিয়া লাইব্রেরি ফোকাস সক্রিয় করা হয়েছে");
+      } else {
+        document.documentElement.style.setProperty("--left-panel-w", "290px");
+        document.documentElement.style.setProperty("--right-panel-w", "290px");
+        document.documentElement.style.setProperty("--timeline-h", "230px");
+        UI.toast("🎛️ ডিফল্ট স্টুডিও লেআউট সক্রিয় করা হয়েছে");
+      }
+      localStorage.setItem("aive_left_w", parseInt(getComputedStyle(document.documentElement).getPropertyValue("--left-panel-w")));
+      localStorage.setItem("aive_right_w", parseInt(getComputedStyle(document.documentElement).getPropertyValue("--right-panel-w")));
+      localStorage.setItem("aive_timeline_h", parseInt(getComputedStyle(document.documentElement).getPropertyValue("--timeline-h")));
+      setTimeout(() => {
+        Overlay.resize();
+        Timeline.render();
+      }, 50);
+    }
+  };
+
+  // ==========================================
+  // PHOTO-TO-VIDEO SLIDESHOW STUDIO ENGINE
+  // ==========================================
+  const PhotoVideoMaker = {
+    createSlideshow() {
+      const imgMedia = Array.from(Editor.media.values()).filter(
+        (m) => m.isImage || (m.info && m.info.type === "image")
+      );
+
+      if (imgMedia.length === 0) {
+        UI.toast("দয়া করে প্রথমে ১ বা একাধিক ছবি আপলোড করুন");
+        const fileInput = document.getElementById("file-input");
+        if (fileInput) fileInput.click();
+        return;
+      }
+
+      const durPerPhoto = Number(document.getElementById("slideshow-duration")?.value) || 3;
+      const motion = document.getElementById("slideshow-motion")?.value || "zoomIn";
+      const trans = document.getElementById("slideshow-trans")?.value || "fade";
+      const addBgm = document.getElementById("slideshow-bgm")?.checked ?? true;
+
+      // Clear existing image clips on v1 to give fresh clean sequence
+      Editor.project.clips = Editor.project.clips.filter((c) => c.type !== "image");
+
+      let curStart = 0;
+      imgMedia.forEach((m, idx) => {
+        let photoMotion = motion;
+        if (motion === "zoomIn" && idx % 2 === 1) photoMotion = "zoomOut";
+        else if (motion === "panLeft" && idx % 2 === 1) photoMotion = "panRight";
+
+        const clip = {
+          id: uid("clip"),
+          type: "image",
+          track: "v1",
+          sourceId: m.id,
+          start: curStart,
+          inPoint: 0,
+          outPoint: durPerPhoto,
+          duration: durPerPhoto,
+          speed: 1,
+          rotate: 0,
+          flipH: false,
+          flipV: false,
+          filter: "original",
+          filterIntensity: 1,
+          adjustments: EffectsStudio.defaultAdjust(),
+          effect: "none",
+          intensity: 50,
+          transition: trans,
+          transDur: 0.6,
+          fadeIn: idx === 0 ? 0.3 : 0.4,
+          fadeOut: idx === imgMedia.length - 1 ? 0.4 : 0.4,
+          kenBurns: photoMotion
+        };
+
+        if (idx === 0 && m.info && m.info.width) {
+          Editor.project.width = m.info.width;
+          Editor.project.height = m.info.height;
+        }
+
+        Editor.addClip(clip);
+        curStart += durPerPhoto;
+      });
+
+      // Background audio
+      if (addBgm && !Editor.project.clips.some((c) => c.type === "audio")) {
+        if (global.SoundFX && global.SoundFX.SFX_ITEMS) {
+          const ambient = global.SoundFX.SFX_ITEMS.find((s) => s.category === "Ambience" || s.id === "ambient_cinematic") || global.SoundFX.SFX_ITEMS[0];
+          if (ambient) {
+            global.SoundFX.insertToTimeline(ambient.id);
+          }
+        }
+      }
+
+      Editor.playhead = 0;
+      Player.seekTimeline(0);
+      Timeline.render();
+      Overlay.draw();
+      Player.play();
+      UI.toast(`🎬 ${imgMedia.length}টি ছবি দিয়ে সফলভাবে সিনেমাটিক ভিডিও তৈরি হয়েছে!`);
+    }
+  };
+
+  // ==========================================
   // EXPOSE GLOBAL API & INTEGRATION HOOKS
   // ==========================================
   global.ChromaKey = ChromaKey;
@@ -1797,6 +2150,8 @@
   global.ProjectIO = ProjectIO;
   global.CommandPalette = CommandPalette;
   global.TextStudio = TextStudio;
+  global.WorkspaceLayout = WorkspaceLayout;
+  global.PhotoVideoMaker = PhotoVideoMaker;
 
   // Initialize all features when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
@@ -1806,6 +2161,7 @@
     CanvasInteraction.init();
     CommandPalette.init();
     TextStudio.init();
+    WorkspaceLayout.init();
   });
 })(window);
 
