@@ -42,11 +42,14 @@
         <span id="project-meta" class="project-meta">1920×1080 · 30fps</span>
       </div>
       <div class="header-right">
-        <select id="workspace-layout-select" class="btn ghost" style="padding: 5px 8px; font-size: 11px; font-weight: 600;" title="Workspace Layout Preset (প্যানেল লেআউট পরিবর্তন করুন)">
+        <select id="workspace-layout-select" class="btn ghost" style="padding: 5px 8px; font-size: 11px; font-weight: 600;" title="Workspace Layout Preset (প্যানেল লেআউট কাস্টমাইজ করুন)">
           <option value="default">🎛️ Default Layout</option>
           <option value="theater">🎬 Big Preview (থিয়েটার)</option>
           <option value="timeline">⏱️ Timeline Focus</option>
           <option value="media">📁 Media Focus</option>
+          <option value="swapped">⇄ Swapped Panels (অদলবদল)</option>
+          <option value="float-left">⛶ Floating Tools (ভাসমান)</option>
+          <option value="float-right">⛶ Floating Inspector (ভাসমান)</option>
         </select>
         <button class="btn ghost cmd-btn" data-action="open-cmd" title="Quick Command Palette (Ctrl+K)">⚡ Cmd (Ctrl+K)</button>
         <button class="btn ghost" data-action="open-help" title="Help" aria-label="Help">Help</button>
@@ -57,20 +60,28 @@
 
     <div class="workspace">
       <aside class="sidebar left-sidebar" id="left-sidebar" aria-label="Media tools">
+        <div class="panel-dock-bar" id="dock-bar-left" draggable="true" title="Drag to customize or reposition panel">
+          <div class="dock-title-wrap"><span class="dock-grip" title="Drag panel header to swap or float">⋮⋮</span><span>📁 Tools &amp; Media</span></div>
+          <div class="dock-actions">
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.swapSidebars()" title="Swap with Right Inspector (ডান ও বাম অদলবদল)">⇄</button>
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleFloat('left-sidebar')" title="Float / Detach Panel (ভাসমান উইন্ডো)">⛶</button>
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleCollapse('left-sidebar')" title="Collapse / Expand (হাইড/শো)">◀</button>
+          </div>
+        </div>
         <nav class="tool-tabs" role="tablist" aria-label="Tool panels">
-          <button class="tool-tab active" data-panel="media" role="tab" aria-selected="true"><span class="tab-icon">📁</span> Media</button>
-          <button class="tool-tab" data-panel="audio" role="tab"><span class="tab-icon">🎵</span> Audio</button>
-          <button class="tool-tab" data-panel="sfx" role="tab"><span class="tab-icon">🔊</span> SFX &amp; Voice</button>
-          <button class="tool-tab" data-panel="stickers" role="tab"><span class="tab-icon">✨</span> Stickers</button>
-          <button class="tool-tab" data-panel="text" role="tab"><span class="tab-icon">🔤</span> Text</button>
-          <button class="tool-tab" data-panel="subtitles" role="tab"><span class="tab-icon">💬</span> Subtitles</button>
-          <button class="tool-tab" data-panel="elements" role="tab"><span class="tab-icon">📐</span> Elements</button>
-          <button class="tool-tab" data-panel="transitions" role="tab"><span class="tab-icon">🔀</span> Transitions</button>
-          <button class="tool-tab" data-panel="effects" role="tab"><span class="tab-icon">🪄</span> Effects</button>
-          <button class="tool-tab" data-panel="filters" role="tab"><span class="tab-icon">🎨</span> Filters</button>
-          <button class="tool-tab" data-panel="ai" role="tab"><span class="tab-icon">🤖</span> AI Tools</button>
-          <button class="tool-tab" data-panel="templates" role="tab"><span class="tab-icon">📑</span> Templates</button>
-          <button class="tool-tab" data-panel="brand" role="tab"><span class="tab-icon">🏷️</span> Brand Kit</button>
+          <button class="tool-tab active" data-panel="media" role="tab" aria-selected="true" draggable="true"><span class="tab-icon">📁</span> Media</button>
+          <button class="tool-tab" data-panel="audio" role="tab" draggable="true"><span class="tab-icon">🎵</span> Audio</button>
+          <button class="tool-tab" data-panel="sfx" role="tab" draggable="true"><span class="tab-icon">🔊</span> SFX &amp; Voice</button>
+          <button class="tool-tab" data-panel="stickers" role="tab" draggable="true"><span class="tab-icon">✨</span> Stickers</button>
+          <button class="tool-tab" data-panel="text" role="tab" draggable="true"><span class="tab-icon">🔤</span> Text</button>
+          <button class="tool-tab" data-panel="subtitles" role="tab" draggable="true"><span class="tab-icon">💬</span> Subtitles</button>
+          <button class="tool-tab" data-panel="elements" role="tab" draggable="true"><span class="tab-icon">📐</span> Elements</button>
+          <button class="tool-tab" data-panel="transitions" role="tab" draggable="true"><span class="tab-icon">🔀</span> Transitions</button>
+          <button class="tool-tab" data-panel="effects" role="tab" draggable="true"><span class="tab-icon">🪄</span> Effects</button>
+          <button class="tool-tab" data-panel="filters" role="tab" draggable="true"><span class="tab-icon">🎨</span> Filters</button>
+          <button class="tool-tab" data-panel="ai" role="tab" draggable="true"><span class="tab-icon">🤖</span> AI Tools</button>
+          <button class="tool-tab" data-panel="templates" role="tab" draggable="true"><span class="tab-icon">📑</span> Templates</button>
+          <button class="tool-tab" data-panel="brand" role="tab" draggable="true"><span class="tab-icon">🏷️</span> Brand Kit</button>
         </nav>
 
         <div class="panel-stack">
@@ -588,13 +599,21 @@
       <div class="panel-resizer resizer-right" id="resizer-right" title="Drag horizontally to resize Right Panel (Double-click to reset)" role="separator" aria-orientation="vertical" tabindex="0"></div>
 
       <aside class="sidebar right-sidebar" id="right-sidebar" aria-label="Properties">
+        <div class="panel-dock-bar" id="dock-bar-right" draggable="true" title="Drag to customize or reposition panel">
+          <div class="dock-title-wrap"><span class="dock-grip" title="Drag panel header to swap or float">⋮⋮</span><span>⚙️ Inspector &amp; Props</span></div>
+          <div class="dock-actions">
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.swapSidebars()" title="Swap with Left Tools (ডান ও বাম অদলবদল)">⇄</button>
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleFloat('right-sidebar')" title="Float / Detach Panel (ভাসমান উইন্ডো)">⛶</button>
+            <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleCollapse('right-sidebar')" title="Collapse / Expand (হাইড/শো)">▶</button>
+          </div>
+        </div>
         <nav class="tool-tabs" role="tablist">
-          <button class="tool-tab active" data-rpanel="props"><span class="tab-icon">⚙️</span> Props</button>
-          <button class="tool-tab" data-rpanel="video"><span class="tab-icon">🎬</span> Video</button>
-          <button class="tool-tab" data-rpanel="audio"><span class="tab-icon">🎚️</span> Audio</button>
-          <button class="tool-tab" data-rpanel="text"><span class="tab-icon">✍️</span> Text</button>
-          <button class="tool-tab" data-rpanel="effects"><span class="tab-icon">✨</span> Effects</button>
-          <button class="tool-tab" data-rpanel="assistant"><span class="tab-icon">🤖</span> AI</button>
+          <button class="tool-tab active" data-rpanel="props" draggable="true"><span class="tab-icon">⚙️</span> Props</button>
+          <button class="tool-tab" data-rpanel="video" draggable="true"><span class="tab-icon">🎬</span> Video</button>
+          <button class="tool-tab" data-rpanel="audio" draggable="true"><span class="tab-icon">🎚️</span> Audio</button>
+          <button class="tool-tab" data-rpanel="text" draggable="true"><span class="tab-icon">✍️</span> Text</button>
+          <button class="tool-tab" data-rpanel="effects" draggable="true"><span class="tab-icon">✨</span> Effects</button>
+          <button class="tool-tab" data-rpanel="assistant" draggable="true"><span class="tab-icon">🤖</span> AI</button>
         </nav>
         <div class="panel-stack">
           <section class="tool-panel active" id="rpanel-props">

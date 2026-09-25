@@ -1050,7 +1050,10 @@
       { id: "layout_default", title: "Reset Panel Layout (প্যানেল সাইজ ডিফল্ট)", category: "Workspace", icon: "🎛️", action: () => WorkspaceLayout.applyPreset("default") },
       { id: "layout_theater", title: "Theater Mode (থিয়েটার মোড / Big Canvas)", category: "Workspace", icon: "🎬", action: () => WorkspaceLayout.applyPreset("theater") },
       { id: "layout_timeline", title: "Timeline Focus (টাইমলাইন মোড)", category: "Workspace", icon: "⏱️", action: () => WorkspaceLayout.applyPreset("timeline") },
-      { id: "layout_media", title: "Media Library Focus (মিডিয়া ফোকাস)", category: "Workspace", icon: "📁", action: () => WorkspaceLayout.applyPreset("media") }
+      { id: "layout_media", title: "Media Library Focus (মিডিয়া ফোকাস)", category: "Workspace", icon: "📁", action: () => WorkspaceLayout.applyPreset("media") },
+      { id: "layout_swap", title: "Swap Sidebars (ডান ও বাম প্যানেল অদলবদল)", category: "Workspace", icon: "⇄", action: () => WorkspaceLayout.swapSidebars() },
+      { id: "layout_float_left", title: "Float Tools Panel (ভাসমান বাম টুলস প্যানেল)", category: "Workspace", icon: "⛶", action: () => WorkspaceLayout.toggleFloat("left-sidebar") },
+      { id: "layout_float_right", title: "Float Inspector Panel (ভাসমান ডান ইন্সপেক্টর)", category: "Workspace", icon: "⛶", action: () => WorkspaceLayout.toggleFloat("right-sidebar") }
     ],
 
     init() {
@@ -1877,16 +1880,195 @@
       this.restoreLayout();
       this.bindResizers();
       this.bindPresets();
+      this.bindDockBars();
+      this.bindTabDragging();
     },
 
     restoreLayout() {
       const leftW = localStorage.getItem("aive_left_w");
       const rightW = localStorage.getItem("aive_right_w");
       const timeH = localStorage.getItem("aive_timeline_h");
+      const isSwapped = localStorage.getItem("aive_swapped") === "1";
 
       if (leftW) document.documentElement.style.setProperty("--left-panel-w", leftW + "px");
       if (rightW) document.documentElement.style.setProperty("--right-panel-w", rightW + "px");
       if (timeH) document.documentElement.style.setProperty("--timeline-h", timeH + "px");
+
+      const ws = document.querySelector(".workspace");
+      if (ws && isSwapped) {
+        ws.classList.add("is-swapped");
+      }
+    },
+
+    swapSidebars() {
+      const ws = document.querySelector(".workspace");
+      if (!ws) return;
+      ws.classList.toggle("is-swapped");
+      const isSwapped = ws.classList.contains("is-swapped");
+      localStorage.setItem("aive_swapped", isSwapped ? "1" : "0");
+      Overlay.resize();
+      UI.toast(isSwapped ? "⇄ বাম ও ডান প্যানেল অদলবদল (Swapped) করা হয়েছে" : "⇄ প্যানেল পূর্বাবস্থায় ফিরিয়ে নেওয়া হয়েছে");
+    },
+
+    toggleFloat(panelId) {
+      const el = document.getElementById(panelId);
+      if (!el) return;
+      const isFloating = el.classList.toggle("is-floating");
+
+      if (isFloating) {
+        if (panelId === "left-sidebar") {
+          el.style.left = "40px";
+          el.style.top = "60px";
+          el.style.width = "380px";
+          el.style.height = "560px";
+        } else {
+          el.style.left = Math.max(20, window.innerWidth - 440) + "px";
+          el.style.top = "60px";
+          el.style.width = "400px";
+          el.style.height = "580px";
+        }
+        UI.toast("⛶ প্যানেল ভাসমান (Floating) করা হয়েছে — হেডার ধরে যেকোনো জায়গায় সরান");
+      } else {
+        el.style.left = "";
+        el.style.top = "";
+        el.style.width = "";
+        el.style.height = "";
+        UI.toast("📌 প্যানেল পুনরায় ডকে সংযুক্ত (Docked) করা হয়েছে");
+      }
+      Overlay.resize();
+    },
+
+    toggleCollapse(panelId) {
+      const isLeft = panelId === "left-sidebar";
+      const varName = isLeft ? "--left-panel-w" : "--right-panel-w";
+      const curVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue(varName)) || 290;
+
+      if (curVal > 60) {
+        document.documentElement.style.setProperty(varName, "50px");
+        UI.toast("প্যানেল সংক্ষিপ্ত (Collapsed) করা হয়েছে");
+      } else {
+        const saved = isLeft ? (localStorage.getItem("aive_left_w") || "290") : (localStorage.getItem("aive_right_w") || "290");
+        document.documentElement.style.setProperty(varName, (parseInt(saved) > 100 ? saved : "290") + "px");
+        UI.toast("প্যানেল সম্প্রসারিত (Expanded) করা হয়েছে");
+      }
+      Overlay.resize();
+    },
+
+    bindDockBars() {
+      // Floating window movement & dock bar drag-swap
+      ["left-sidebar", "right-sidebar"].forEach((sidebarId) => {
+        const sidebar = document.getElementById(sidebarId);
+        if (!sidebar) return;
+        const dockBar = sidebar.querySelector(".panel-dock-bar");
+        if (!dockBar) return;
+
+        // 1. Draggable movement when floating
+        dockBar.addEventListener("mousedown", (e) => {
+          if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
+          if (!sidebar.classList.contains("is-floating")) return;
+
+          e.preventDefault();
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const rect = sidebar.getBoundingClientRect();
+          const startLeft = rect.left;
+          const startTop = rect.top;
+
+          const onMove = (ev) => {
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+            const newLeft = Math.max(10, Math.min(window.innerWidth - sidebar.offsetWidth - 10, startLeft + dx));
+            const newTop = Math.max(10, Math.min(window.innerHeight - 80, startTop + dy));
+            sidebar.style.left = newLeft + "px";
+            sidebar.style.top = newTop + "px";
+          };
+
+          const onUp = () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+          };
+
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        });
+
+        // 2. Drag & Drop Dock Bar for swapping
+        dockBar.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", sidebarId);
+          e.dataTransfer.effectAllowed = "move";
+          sidebar.style.opacity = "0.7";
+        });
+
+        dockBar.addEventListener("dragend", () => {
+          sidebar.style.opacity = "1";
+        });
+
+        sidebar.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+        });
+
+        sidebar.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const sourceId = e.dataTransfer.getData("text/plain");
+          if (sourceId && sourceId !== sidebarId) {
+            WorkspaceLayout.swapSidebars();
+          }
+        });
+      });
+    },
+
+    bindTabDragging() {
+      // Allow users to reorder tool tabs by dragging them
+      document.querySelectorAll(".tool-tabs").forEach((tabsContainer) => {
+        let draggedTab = null;
+
+        tabsContainer.addEventListener("dragstart", (e) => {
+          const tab = e.target.closest(".tool-tab");
+          if (!tab) return;
+          draggedTab = tab;
+          tab.classList.add("is-tab-dragging");
+          e.dataTransfer.setData("text/plain", tab.dataset.panel || tab.dataset.rpanel || "");
+          e.dataTransfer.effectAllowed = "move";
+        });
+
+        tabsContainer.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          const targetTab = e.target.closest(".tool-tab");
+          if (targetTab && targetTab !== draggedTab) {
+            document.querySelectorAll(".tool-tab.is-tab-over").forEach((t) => t.classList.remove("is-tab-over"));
+            targetTab.classList.add("is-tab-over");
+          }
+        });
+
+        tabsContainer.addEventListener("dragleave", (e) => {
+          const targetTab = e.target.closest(".tool-tab");
+          if (targetTab) targetTab.classList.remove("is-tab-over");
+        });
+
+        tabsContainer.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const targetTab = e.target.closest(".tool-tab");
+          if (targetTab && draggedTab && targetTab !== draggedTab) {
+            const rect = targetTab.getBoundingClientRect();
+            const after = e.clientX > rect.left + rect.width / 2;
+            if (after) {
+              tabsContainer.insertBefore(draggedTab, targetTab.nextSibling);
+            } else {
+              tabsContainer.insertBefore(draggedTab, targetTab);
+            }
+            UI.toast("ট্যাব সাজানো সফল হয়েছে!");
+          }
+          document.querySelectorAll(".tool-tab.is-tab-over").forEach((t) => t.classList.remove("is-tab-over"));
+        });
+
+        tabsContainer.addEventListener("dragend", () => {
+          if (draggedTab) draggedTab.classList.remove("is-tab-dragging");
+          draggedTab = null;
+          document.querySelectorAll(".tool-tab.is-tab-over").forEach((t) => t.classList.remove("is-tab-over"));
+        });
+      });
     },
 
     bindResizers() {
@@ -1894,35 +2076,46 @@
       const rightResizer = document.getElementById("resizer-right");
       const timeResizer = document.getElementById("resizer-timeline");
 
-      // 1. Left Panel Resizer
+      // 1. Left Panel Resizer (Mouse + Touch)
       if (leftResizer) {
-        let isDragging = false;
-        leftResizer.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          isDragging = true;
+        const startResizeLeft = (clientX) => {
           document.body.classList.add("is-resizing-col");
           leftResizer.classList.add("resizing");
 
-          const onMove = (ev) => {
-            if (!isDragging) return;
-            const newW = Math.min(Math.max(180, ev.clientX), Math.min(window.innerWidth - 450, 600));
+          const onMove = (cx) => {
+            const newW = Math.min(Math.max(160, cx), Math.min(window.innerWidth - 450, 650));
             document.documentElement.style.setProperty("--left-panel-w", newW + "px");
             localStorage.setItem("aive_left_w", newW);
             Overlay.resize();
           };
 
-          const onUp = () => {
-            isDragging = false;
+          const onMouseMove = (ev) => onMove(ev.clientX);
+          const onTouchMove = (ev) => { if (ev.touches.length) onMove(ev.touches[0].clientX); };
+
+          const onEnd = () => {
             document.body.classList.remove("is-resizing-col");
             leftResizer.classList.remove("resizing");
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onEnd);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onEnd);
             Overlay.resize();
           };
 
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onEnd);
+          window.addEventListener("touchmove", onTouchMove, { passive: true });
+          window.addEventListener("touchend", onEnd);
+        };
+
+        leftResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          startResizeLeft(e.clientX);
         });
+
+        leftResizer.addEventListener("touchstart", (e) => {
+          if (e.touches.length) startResizeLeft(e.touches[0].clientX);
+        }, { passive: true });
 
         leftResizer.addEventListener("dblclick", () => {
           document.documentElement.style.setProperty("--left-panel-w", "290px");
@@ -1932,35 +2125,46 @@
         });
       }
 
-      // 2. Right Panel Resizer
+      // 2. Right Panel Resizer (Mouse + Touch)
       if (rightResizer) {
-        let isDragging = false;
-        rightResizer.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          isDragging = true;
+        const startResizeRight = (clientX) => {
           document.body.classList.add("is-resizing-col");
           rightResizer.classList.add("resizing");
 
-          const onMove = (ev) => {
-            if (!isDragging) return;
-            const newW = Math.min(Math.max(180, window.innerWidth - ev.clientX), Math.min(window.innerWidth - 450, 600));
+          const onMove = (cx) => {
+            const newW = Math.min(Math.max(160, window.innerWidth - cx), Math.min(window.innerWidth - 450, 650));
             document.documentElement.style.setProperty("--right-panel-w", newW + "px");
             localStorage.setItem("aive_right_w", newW);
             Overlay.resize();
           };
 
-          const onUp = () => {
-            isDragging = false;
+          const onMouseMove = (ev) => onMove(ev.clientX);
+          const onTouchMove = (ev) => { if (ev.touches.length) onMove(ev.touches[0].clientX); };
+
+          const onEnd = () => {
             document.body.classList.remove("is-resizing-col");
             rightResizer.classList.remove("resizing");
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onEnd);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onEnd);
             Overlay.resize();
           };
 
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onEnd);
+          window.addEventListener("touchmove", onTouchMove, { passive: true });
+          window.addEventListener("touchend", onEnd);
+        };
+
+        rightResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          startResizeRight(e.clientX);
         });
+
+        rightResizer.addEventListener("touchstart", (e) => {
+          if (e.touches.length) startResizeRight(e.touches[0].clientX);
+        }, { passive: true });
 
         rightResizer.addEventListener("dblclick", () => {
           document.documentElement.style.setProperty("--right-panel-w", "290px");
@@ -1970,37 +2174,48 @@
         });
       }
 
-      // 3. Timeline Resizer
+      // 3. Timeline Resizer (Mouse + Touch)
       if (timeResizer) {
-        let isDragging = false;
-        timeResizer.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          isDragging = true;
+        const startResizeTimeline = (clientY) => {
           document.body.classList.add("is-resizing-row");
           timeResizer.classList.add("resizing");
 
-          const onMove = (ev) => {
-            if (!isDragging) return;
-            const newH = Math.min(Math.max(130, window.innerHeight - ev.clientY), Math.min(window.innerHeight - 250, 600));
+          const onMove = (cy) => {
+            const newH = Math.min(Math.max(130, window.innerHeight - cy), Math.min(window.innerHeight - 220, 650));
             document.documentElement.style.setProperty("--timeline-h", newH + "px");
             localStorage.setItem("aive_timeline_h", newH);
             Overlay.resize();
             Timeline.render();
           };
 
-          const onUp = () => {
-            isDragging = false;
+          const onMouseMove = (ev) => onMove(ev.clientY);
+          const onTouchMove = (ev) => { if (ev.touches.length) onMove(ev.touches[0].clientY); };
+
+          const onEnd = () => {
             document.body.classList.remove("is-resizing-row");
             timeResizer.classList.remove("resizing");
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onEnd);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onEnd);
             Overlay.resize();
             Timeline.render();
           };
 
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onEnd);
+          window.addEventListener("touchmove", onTouchMove, { passive: true });
+          window.addEventListener("touchend", onEnd);
+        };
+
+        timeResizer.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          startResizeTimeline(e.clientY);
         });
+
+        timeResizer.addEventListener("touchstart", (e) => {
+          if (e.touches.length) startResizeTimeline(e.touches[0].clientY);
+        }, { passive: true });
 
         timeResizer.addEventListener("dblclick", () => {
           document.documentElement.style.setProperty("--timeline-h", "230px");
@@ -2024,25 +2239,40 @@
       const sel = document.getElementById("workspace-layout-select");
       if (sel) sel.value = name;
 
+      const ws = document.querySelector(".workspace");
       if (name === "theater") {
         document.documentElement.style.setProperty("--left-panel-w", "200px");
         document.documentElement.style.setProperty("--right-panel-w", "200px");
         document.documentElement.style.setProperty("--timeline-h", "160px");
+        if (ws) ws.classList.remove("is-swapped");
         UI.toast("🎬 থিয়েটার মোড (Big Canvas Mode) সক্রিয় করা হয়েছে");
       } else if (name === "timeline") {
         document.documentElement.style.setProperty("--left-panel-w", "240px");
         document.documentElement.style.setProperty("--right-panel-w", "240px");
         document.documentElement.style.setProperty("--timeline-h", "360px");
+        if (ws) ws.classList.remove("is-swapped");
         UI.toast("⏱️ টাইমলাইন ফোকাস মোড সক্রিয় করা হয়েছে");
       } else if (name === "media") {
         document.documentElement.style.setProperty("--left-panel-w", "420px");
         document.documentElement.style.setProperty("--right-panel-w", "220px");
         document.documentElement.style.setProperty("--timeline-h", "200px");
+        if (ws) ws.classList.remove("is-swapped");
         UI.toast("📁 মিডিয়া লাইব্রেরি ফোকাস সক্রিয় করা হয়েছে");
+      } else if (name === "swapped") {
+        this.swapSidebars();
+        return;
+      } else if (name === "float-left") {
+        this.toggleFloat("left-sidebar");
+        return;
+      } else if (name === "float-right") {
+        this.toggleFloat("right-sidebar");
+        return;
       } else {
         document.documentElement.style.setProperty("--left-panel-w", "290px");
         document.documentElement.style.setProperty("--right-panel-w", "290px");
         document.documentElement.style.setProperty("--timeline-h", "230px");
+        if (ws) ws.classList.remove("is-swapped");
+        document.querySelectorAll(".sidebar.is-floating").forEach((s) => this.toggleFloat(s.id));
         UI.toast("🎛️ ডিফল্ট স্টুডিও লেআউট সক্রিয় করা হয়েছে");
       }
       localStorage.setItem("aive_left_w", parseInt(getComputedStyle(document.documentElement).getPropertyValue("--left-panel-w")));

@@ -244,27 +244,57 @@ img, svg, video, canvas { max-width: 100%; }
 
 /* Draggable Panel Resizers */
 .panel-resizer {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   position: relative;
-  z-index: 15;
+  z-index: 25;
   user-select: none;
   touch-action: none;
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.panel-resizer::after {
+/* Wide invisible hit area so grabbing is effortless */
+.panel-resizer::before {
   content: "";
   position: absolute;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
 }
 
 .panel-resizer.resizer-left,
 .panel-resizer.resizer-right {
   cursor: col-resize;
-  width: 6px;
+  width: 8px;
   height: 100%;
+}
+.panel-resizer.resizer-left::before,
+.panel-resizer.resizer-right::before {
+  top: 0; bottom: 0;
+  left: -5px; right: -5px;
+}
+
+.panel-resizer.resizer-timeline {
+  cursor: row-resize;
+  height: 8px;
+  width: 100%;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.panel-resizer.resizer-timeline::before {
+  left: 0; right: 0;
+  top: -5px; bottom: -5px;
+}
+
+.panel-resizer::after {
+  content: "⋮";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--text-bright);
+  font-size: 11px;
+  border-radius: 4px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
 .panel-resizer.resizer-left::after,
@@ -272,35 +302,31 @@ img, svg, video, canvas { max-width: 100%; }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 3px;
-  height: 38px;
-}
-
-.panel-resizer.resizer-timeline {
-  cursor: row-resize;
-  height: 6px;
-  width: 100%;
-  border-top: 1px solid var(--line);
-  flex-shrink: 0;
+  width: 10px;
+  height: 44px;
 }
 
 .panel-resizer.resizer-timeline::after {
+  content: "⋯";
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 54px;
-  height: 3px;
+  width: 64px;
+  height: 10px;
+  font-size: 14px;
+  line-height: 8px;
 }
 
 .panel-resizer:hover,
 .panel-resizer.resizing {
-  background: rgba(99, 102, 241, 0.28) !important;
+  background: rgba(99, 102, 241, 0.35) !important;
 }
 
 .panel-resizer:hover::after,
 .panel-resizer.resizing::after {
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 14px var(--accent) !important;
 }
 
 body.is-resizing-col {
@@ -311,6 +337,94 @@ body.is-resizing-col {
 body.is-resizing-row {
   cursor: row-resize !important;
   user-select: none !important;
+}
+
+/* Panel Header Dock Bar (Draggable & Customizable) */
+.panel-dock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: rgba(15, 20, 32, 0.95);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  user-select: none;
+  cursor: grab;
+}
+.panel-dock-bar:active {
+  cursor: grabbing;
+}
+.dock-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dock-grip {
+  font-size: 13px;
+  color: var(--accent);
+  opacity: 0.85;
+  cursor: grab;
+}
+.panel-dock-bar:hover .dock-grip {
+  opacity: 1;
+}
+.dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn.mini {
+  padding: 2px 6px;
+  font-size: 10.5px;
+  height: 22px;
+  min-width: 22px;
+}
+
+/* Floating Window Mode */
+.sidebar.is-floating {
+  position: fixed !important;
+  z-index: 100 !important;
+  width: 440px !important;
+  height: 600px !important;
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 20px var(--accent-glow) !important;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  resize: both;
+}
+
+/* Swapped Panels Layout Class */
+.workspace.is-swapped {
+  grid-template-columns: var(--right-panel-w, 290px) 8px minmax(0, 1fr) 8px var(--left-panel-w, 290px);
+}
+.workspace.is-swapped .left-sidebar {
+  grid-column: 5;
+}
+.workspace.is-swapped .right-sidebar {
+  grid-column: 1;
+}
+.workspace.is-swapped #resizer-left {
+  grid-column: 4;
+}
+.workspace.is-swapped #resizer-right {
+  grid-column: 2;
+}
+
+/* Draggable Tabs */
+.tool-tab[draggable="true"] {
+  cursor: grab;
+}
+.tool-tab.is-tab-dragging {
+  opacity: 0.4;
+  border: 1px dashed var(--accent);
+}
+.tool-tab.is-tab-over {
+  border-left: 2px solid var(--accent);
 }
 
 /* Sidebars */
