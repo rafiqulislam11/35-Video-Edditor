@@ -1047,6 +1047,7 @@
       { id: "convert_bijoy", title: "বিজয় থেকে ইউনিকোড (Convert Bijoy to Unicode)", category: "Text", icon: "🇧🇩", action: () => TextStudio.convertBijoyToUnicode() },
       { id: "convert_unicode_bijoy", title: "ইউনিকোড থেকে বিজয় (Convert Unicode to Bijoy)", category: "Text", icon: "🇧🇩", action: () => TextStudio.convertUnicodeToBijoy() },
       { id: "photo_slideshow", title: "ছবি দিয়ে ভিডিও তৈরি (Create Video from Photos)", category: "Media", icon: "📸", action: () => PhotoVideoMaker.createSlideshow() },
+      { id: "pwa_install", title: "Install Offline App (অফলাইন অ্যাপ ইনস্টল)", category: "App", icon: "📥", action: () => document.getElementById("pwa-install-btn")?.click() },
       { id: "layout_default", title: "Reset Panel Layout (প্যানেল সাইজ ডিফল্ট)", category: "Workspace", icon: "🎛️", action: () => WorkspaceLayout.applyPreset("default") },
       { id: "layout_theater", title: "Theater Mode (থিয়েটার মোড / Big Canvas)", category: "Workspace", icon: "🎬", action: () => WorkspaceLayout.applyPreset("theater") },
       { id: "layout_timeline", title: "Timeline Focus (টাইমলাইন মোড)", category: "Workspace", icon: "⏱️", action: () => WorkspaceLayout.applyPreset("timeline") },
@@ -2647,6 +2648,114 @@
   };
 
   // ==========================================
+  // PWA & OFFLINE-FIRST CAPABILITY ENGINE
+  // ==========================================
+  const OfflinePWA = {
+    deferredPrompt: null,
+
+    init() {
+      // 1. Register Service Worker for 100% offline & online caching
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .then((reg) => {
+              console.log("[PWA] Service Worker registered, offline ready:", reg.scope);
+              reg.onupdatefound = () => {
+                const installing = reg.installing;
+                if (installing) {
+                  installing.onstatechange = () => {
+                    if (installing.state === "installed" && navigator.serviceWorker.controller) {
+                      UI.toast("নতুন অফলাইন আপডেট রেডি! 🚀 (Update ready)");
+                    }
+                  };
+                }
+              };
+            })
+            .catch((err) => {
+              console.warn("[PWA] Service Worker registration:", err);
+            });
+        });
+      }
+
+      // 2. Track Network Status (Online / Offline)
+      const updateNetworkStatus = () => {
+        const isOnline = navigator.onLine;
+        const statusEl = document.getElementById("network-status");
+        const textEl = document.getElementById("network-text");
+        if (statusEl) {
+          statusEl.classList.toggle("online", isOnline);
+          statusEl.classList.toggle("offline", !isOnline);
+          statusEl.title = isOnline
+            ? "Status: Online (সব ক্লাউড ও লোকাল ফিচার চালু)"
+            : "Status: Offline (ইন্টারনেট ছাড়া সম্পূর্ণ কার্যকর — সব ফিচার অফলাইনে চলবে)";
+        }
+        if (textEl) {
+          textEl.textContent = isOnline ? "Online" : "Offline Ready";
+        }
+      };
+
+      window.addEventListener("online", () => {
+        updateNetworkStatus();
+        UI.toast("ইন্টারনেট সংযুক্ত হয়েছে (Back Online) 🌐");
+      });
+
+      window.addEventListener("offline", () => {
+        updateNetworkStatus();
+        UI.toast("আপনি এখন অফলাইনে আছেন। ভিডিও এডিটিং ও এক্সপোর্ট সম্পূর্ণ সচল! ⚡", "warn");
+      });
+
+      updateNetworkStatus();
+
+      // 3. PWA Install Prompt
+      const installBtn = document.getElementById("pwa-install-btn");
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        this.deferredPrompt = e;
+        if (installBtn) {
+          installBtn.hidden = false;
+        }
+      });
+
+      if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+          if (this.deferredPrompt) {
+            this.deferredPrompt.prompt();
+            const { outcome } = await this.deferredPrompt.userChoice;
+            if (outcome === "accepted") {
+              UI.toast("ভিডিও এডিটর সফলভাবে ইনস্টল হয়েছে! 🎉");
+            }
+            this.deferredPrompt = null;
+            installBtn.hidden = true;
+          } else {
+            // Instructions for manual install
+            UI.modal({
+              title: "📥 অফলাইন অ্যাপ ইনস্টল করার নিয়ম (Install App)",
+              body: `
+                <div style="font-size:13px; line-height:1.6;">
+                  <p><strong>কম্পিউটারে (Chrome / Edge / Brave):</strong> ব্রাউজারের অ্যাড্রেস বারের ডান পাশে থাকা <strong>Install</strong> বা <strong>🖥️</strong> আইকনে ক্লিক করুন।</p>
+                  <p><strong>মোবাইলে (Android / Chrome):</strong> ব্রাউজার মেন্যু (৩টি ডট) থেকে <strong>"Add to Home screen"</strong> বা <strong>"Install app"</strong> নির্বাচন করুন।</p>
+                  <p><strong>আইফোনে (iPhone / Safari):</strong> <strong>Share</strong> বাটনে চাপ দিয়ে <strong>"Add to Home Screen"</strong> চাপুন।</p>
+                  <p style="background:var(--panel-2); padding:10px; border-radius:8px; border:1px solid var(--line); color:var(--accent-2);">
+                    ✅ ইনস্টল করার পর ইন্টারনেট ছাড়াই ডেস্কটপ বা ফোনের যেকোনো স্থান থেকে অ্যাপের মতো সরাসরি চালানো যাবে!
+                  </p>
+                </div>
+              `,
+              actions: [{ label: "ঠিক আছে (OK)", className: "primary" }]
+            });
+          }
+        });
+      }
+
+      window.addEventListener("appinstalled", () => {
+        if (installBtn) installBtn.hidden = true;
+        this.deferredPrompt = null;
+        UI.toast("Video Editor Pro ইনস্টল সম্পন্ন! 💻📱");
+      });
+    }
+  };
+
+  // ==========================================
   // EXPOSE GLOBAL API & INTEGRATION HOOKS
   // ==========================================
   global.ChromaKey = ChromaKey;
@@ -2661,6 +2770,7 @@
   global.WorkspaceLayout = WorkspaceLayout;
   global.PhotoVideoMaker = PhotoVideoMaker;
   global.EasyUX = EasyUX;
+  global.OfflinePWA = OfflinePWA;
 
   // Initialize all features when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
@@ -2672,6 +2782,7 @@
     TextStudio.init();
     WorkspaceLayout.init();
     EasyUX.init();
+    OfflinePWA.init();
   });
 })(window);
 

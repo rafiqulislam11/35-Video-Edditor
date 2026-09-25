@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="description" content="AI Video Editor Pro — browser-based professional video editor" />
   <title>AI Video Editor Pro</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='14' width='64' height='64' fill='%236c8cff'/%3E%3Cpolygon points='24,16 48,32 24,48' fill='white'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#6c8cff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VideoEditor Pro" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Anton&family=Bangers&family=Bebas+Neue&family=Cairo:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Montserrat:wght@600;700;800;900&family=Noto+Sans+Arabic:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Oswald:wght@600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@600;700;800&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet" />
@@ -42,6 +48,11 @@
         <span id="project-meta" class="project-meta">1920×1080 · 30fps</span>
       </div>
       <div class="header-right">
+        <div id="network-status" class="network-badge online" title="Status: Online &amp; Offline Ready (অনলাইন ও অফলাইনে সম্পূর্ণ সচল)">
+          <span class="network-dot"></span>
+          <span id="network-text">Online</span>
+        </div>
+        <button type="button" class="btn ghost pwa-install-btn" id="pwa-install-btn" title="Install App on Desktop / Mobile (অ্যাপ ইনস্টল করুন)" hidden>📥 Install</button>
         <select id="workspace-layout-select" class="btn ghost" style="padding: 5px 8px; font-size: 11px; font-weight: 600;" title="Workspace Layout Preset (প্যানেল লেআউট কাস্টমাইজ করুন)">
           <option value="default">🎛️ Default Layout</option>
           <option value="theater">🎬 Big Preview (থিয়েটার)</option>

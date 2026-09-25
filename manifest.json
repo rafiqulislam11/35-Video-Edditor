@@ -1,0 +1,49 @@
+{
+  "name": "AI Video Editor Pro - অফলাইন ও অনলাইন ভিডিও এডিটর",
+  "short_name": "VideoEditor",
+  "description": "Full-featured Offline & Online Multi-Track Video Editor with Bijoy/Unicode Bangla, Screen Recording, AI Effects, and 4K Export",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0d14",
+  "theme_color": "#6c8cff",
+  "lang": "en",
+  "categories": ["video", "multimedia", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "assets/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Project",
+      "url": "./index.html?action=new",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Screen Recorder",
+      "url": "./index.html?action=record",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

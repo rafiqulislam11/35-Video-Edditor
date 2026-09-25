@@ -75,6 +75,11 @@ Upload, drag-and-drop, preview, play/pause/stop, frame step, skip, volume, mute,
 - ⚡ **Command Palette (Ctrl+K)**: Instant spotlight search palette to execute any tool, edit, or filter in one keystroke.
 - 💾 **Project Backup & Restore (.aive file)**: Save and restore entire multi-track projects, edits, and metadata across any device.
 - 🚀 **Multi-Format Export Suite**: Export to WebM Video, MP4 (FFmpeg), Animated GIF (for memes and social sharing), and Studio-Quality Audio-only (.wav mixdown).
+- 🌐 **100% Offline & Online Mode (PWA Support)**:
+  - **Service Worker (`sw.js`)**: Instant offline boot, Stale-While-Revalidate caching for app shell, icons, and assets.
+  - **Web App Manifest (`manifest.json`)**: Installable as a native standalone app on Windows, macOS, Android, iPhone, and Chromebooks.
+  - **Zero-Internet Editing**: Multi-track video slicing, audio mixing, procedural SFX, canvas processing, screen recording, Bijoy/Unicode Bangla typing, and WebM/WAV exports run 100% client-side with zero internet required.
+  - **Network Status Indicator**: Real-time 🟢 Online / ⚡ Offline status badge in the header with automatic online/offline toasts.
 
 **B — FFmpeg / WebAssembly**  
 MP4/MOV transcode, robust audio extract, frame-accurate merge/encode, subtitle mux into a container. Config: `window.AIVE_CONFIG.ffmpeg` in `index.html`. Optional local files in `lib/ffmpeg/` (see that folder’s README).
