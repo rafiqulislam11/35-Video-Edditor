@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='14' width='64' height='64' fill='%236c8cff'/%3E%3Cpolygon points='24,16 48,32 24,48' fill='white'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Montserrat:wght@600;700;800;900&family=Oswald:wght@600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@600;700;800&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -159,60 +159,147 @@
           </section>
 
           <section class="tool-panel" id="panel-text" role="tabpanel" hidden>
-            <h2>Text</h2>
-            <p class="empty-hint" id="text-empty">Add your first text layer.</p>
+            <h2>Text Studio Pro</h2>
+            <p class="empty-hint" id="text-empty">Add a title, caption, viral text or lower third.</p>
+
             <div class="btn-row wrap">
               <button class="btn" data-text-preset="heading">Heading</button>
               <button class="btn" data-text-preset="subheading">Subheading</button>
               <button class="btn" data-text-preset="body">Body</button>
               <button class="btn" data-text-preset="caption">Caption</button>
-              <button class="btn primary" data-text-preset="custom">Custom</button>
+              <button class="btn primary" data-text-preset="custom">+ Add Text</button>
             </div>
-            <label>Content<textarea id="text-content" rows="3"></textarea></label>
+
+            <h3>✨ 1-Click Pro Text Styles</h3>
+            <p class="hint">Pre-designed aesthetic typography (Viral TikTok, Neon, Gold, 80s, Cyberpunk).</p>
+            <div id="text-styles-grid" class="chip-grid"></div>
+
+            <h3>📑 Lower Thirds &amp; Titles</h3>
+            <p class="hint">Professional broadcast titles &amp; social media handle callouts.</p>
+            <div id="text-lower-thirds-grid" class="card-grid"></div>
+
+            <h3>Text Content &amp; Typography</h3>
+            <label>Content (Multiline supported)
+              <textarea id="text-content" rows="3" placeholder="Type text here…"></textarea>
+            </label>
+
             <div class="row-2">
-              <label>Font
+              <label>Font Family
                 <select id="text-font">
-                  <option>Inter</option><option>Georgia</option><option>Arial</option>
-                  <option>Impact</option><option>Courier New</option><option>Noto Sans</option>
+                  <option value="Inter">Inter (Clean UI)</option>
+                  <option value="Bebas Neue">Bebas Neue (YouTube / TikTok)</option>
+                  <option value="Montserrat">Montserrat (Bold Modern)</option>
+                  <option value="Poppins">Poppins (Friendly Sans)</option>
+                  <option value="Roboto">Roboto (Android Standard)</option>
+                  <option value="Anton">Anton (Heavy Impact)</option>
+                  <option value="Oswald">Oswald (Tall Headline)</option>
+                  <option value="Impact">Impact (Meme Classic)</option>
+                  <option value="Playfair Display">Playfair Display (Luxury Serif)</option>
+                  <option value="Pacifico">Pacifico (Handwritten Script)</option>
+                  <option value="Bangers">Bangers (Comic / Pop)</option>
+                  <option value="Georgia">Georgia (Editorial)</option>
+                  <option value="Courier New">Courier New (Typewriter / Code)</option>
                 </select>
               </label>
-              <label>Size <input type="number" id="text-size" min="8" max="200" value="48" /></label>
+              <label>Size (px)
+                <input type="number" id="text-size" min="8" max="260" value="48" />
+              </label>
             </div>
-            <div class="row-2">
-              <label>Color <input type="color" id="text-color" value="#ffffff" /></label>
-              <label>Opacity <input type="range" id="text-opacity" min="0" max="100" value="100" /></label>
-            </div>
+
             <div class="btn-row">
-              <button class="btn icon" data-text-style="bold" aria-label="Bold"><b>B</b></button>
-              <button class="btn icon" data-text-style="italic" aria-label="Italic"><i>I</i></button>
-              <button class="btn icon" data-text-style="underline" aria-label="Underline"><u>U</u></button>
-              <button class="btn icon" data-text-align="left" aria-label="Align left">L</button>
-              <button class="btn icon" data-text-align="center" aria-label="Align center">C</button>
-              <button class="btn icon" data-text-align="right" aria-label="Align right">R</button>
+              <button class="btn icon" data-text-style="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+              <button class="btn icon" data-text-style="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+              <button class="btn icon" data-text-style="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+              <button class="btn icon" data-text-style="uppercase" aria-label="Uppercase" title="Toggle UPPERCASE"><b>TT</b></button>
+              <button class="btn icon" data-text-align="left" aria-label="Align left" title="Align Left">L</button>
+              <button class="btn icon" data-text-align="center" aria-label="Align center" title="Align Center">C</button>
+              <button class="btn icon" data-text-align="right" aria-label="Align right" title="Align Right">R</button>
+            </div>
+
+            <div class="row-2">
+              <label>Fill Type
+                <select id="text-fill-type">
+                  <option value="solid">Solid Color</option>
+                  <option value="gradient">Linear Gradient</option>
+                </select>
+              </label>
+              <label>Opacity %
+                <input type="range" id="text-opacity" min="0" max="100" value="100" />
+              </label>
+            </div>
+
+            <div class="row-2">
+              <label>Primary Color
+                <input type="color" id="text-color" value="#ffffff" />
+              </label>
+              <label id="text-color-2-wrap">Gradient Color 2
+                <input type="color" id="text-color-2" value="#38bdf8" />
+              </label>
+            </div>
+
+            <h3>Stroke &amp; Outline</h3>
+            <label class="check"><input type="checkbox" id="text-stroke-on" checked /> Enable Outline / Stroke</label>
+            <div class="row-2">
+              <label>Stroke Color <input type="color" id="text-stroke-color" value="#000000" /></label>
+              <label>Stroke Width (px) <input type="number" id="text-stroke-width" min="1" max="24" value="4" /></label>
+            </div>
+
+            <h3>Shadow &amp; Glow</h3>
+            <label class="check"><input type="checkbox" id="text-shadow-on" checked /> Enable Drop Shadow / Glow</label>
+            <div class="row-2">
+              <label>Shadow Color <input type="color" id="text-shadow-color" value="#000000" /></label>
+              <label>Blur Radius (px) <input type="number" id="text-shadow-blur" min="0" max="50" value="8" /></label>
             </div>
             <div class="row-2">
-              <label>Letter spacing <input type="number" id="text-tracking" step="0.1" value="0" /></label>
-              <label>Line height <input type="number" id="text-leading" step="0.05" value="1.2" /></label>
+              <label>Offset X <input type="number" id="text-shadow-x" min="-30" max="30" value="2" /></label>
+              <label>Offset Y <input type="number" id="text-shadow-y" min="-30" max="30" value="3" /></label>
+            </div>
+
+            <h3>Background Box / Pill</h3>
+            <label class="check"><input type="checkbox" id="text-bg-on" /> Enable Background Box</label>
+            <div class="row-2">
+              <label>Box Color <input type="color" id="text-bg-color" value="#000000" /></label>
+              <label>Corner Radius <input type="number" id="text-bg-radius" min="0" max="30" value="8" /></label>
             </div>
             <div class="row-2">
-              <label>Background <input type="color" id="text-bg" value="#000000" /></label>
-              <label class="check"><input type="checkbox" id="text-bg-on" /> Fill</label>
+              <label>Padding X <input type="number" id="text-bg-padx" min="0" max="40" value="16" /></label>
+              <label>Padding Y <input type="number" id="text-bg-pady" min="0" max="40" value="8" /></label>
             </div>
-            <h3>Animation</h3>
+
+            <h3>Transform &amp; Spacing</h3>
+            <div class="row-2">
+              <label>Position X % <input type="number" id="text-x" min="0" max="100" value="50" /></label>
+              <label>Position Y % <input type="number" id="text-y" min="0" max="100" value="50" /></label>
+            </div>
+            <div class="row-2">
+              <label>Rotation (deg) <input type="number" id="text-rotate" min="-180" max="180" value="0" /></label>
+              <label>Letter Spacing <input type="number" id="text-tracking" step="1" value="0" /></label>
+            </div>
+            <label>Line Height <input type="number" id="text-leading" step="0.05" min="0.8" max="2.5" value="1.25" /></label>
+
+            <h3>Motion &amp; Animations</h3>
             <select id="text-anim">
-              <option value="none">None</option>
+              <option value="none">None (Static)</option>
               <option value="fadeIn">Fade In</option>
               <option value="fadeOut">Fade Out</option>
               <option value="slideLeft">Slide Left</option>
               <option value="slideRight">Slide Right</option>
               <option value="slideUp">Slide Up</option>
               <option value="slideDown">Slide Down</option>
-              <option value="zoomIn">Zoom In</option>
+              <option value="zoomIn">Zoom In (Pop)</option>
               <option value="zoomOut">Zoom Out</option>
-              <option value="pop">Pop</option>
-              <option value="typewriter">Typewriter</option>
+              <option value="bounce">Elastic Bounce</option>
+              <option value="typewriter">Typewriter (with cursor)</option>
+              <option value="glitch">Cyber Glitch</option>
+              <option value="tracking">Cinematic Title Expand</option>
             </select>
             <label>Duration (s)<input type="number" id="text-anim-dur" min="0.1" max="10" step="0.1" value="0.6" /></label>
+
+            <div class="btn-row wrap" style="margin-top: 14px;">
+              <button class="btn primary-accent" type="button" onclick="TextStudio.addCurrentToTimeline()">➕ Add to Timeline</button>
+              <button class="btn" type="button" onclick="TextStudio.duplicateSelected()">📋 Duplicate</button>
+              <button class="btn danger" type="button" onclick="TextStudio.deleteSelected()">🗑 Delete Layer</button>
+            </div>
           </section>
 
           <section class="tool-panel" id="panel-subtitles" role="tabpanel" hidden>
@@ -523,12 +610,51 @@
             </select>
           </section>
           <section class="tool-panel" id="rpanel-text" hidden>
-            <h2>Text layer</h2>
-            <p class="hint">Select a text clip on the timeline to edit.</p>
-            <label>X % <input type="number" id="text-x" value="50" /></label>
-            <label>Y % <input type="number" id="text-y" value="80" /></label>
-            <label>Shadow <input type="color" id="text-shadow" value="#000000" /></label>
-            <label>Border <input type="color" id="text-border" value="#000000" /></label>
+            <h2>Text Inspector</h2>
+            <p class="hint">Live customize selected text layer properties.</p>
+            <label>Selected Text
+              <textarea id="rtext-content" rows="2" placeholder="Text content…"></textarea>
+            </label>
+            <div class="row-2">
+              <label>Font
+                <select id="rtext-font">
+                  <option value="Inter">Inter</option>
+                  <option value="Bebas Neue">Bebas Neue</option>
+                  <option value="Montserrat">Montserrat</option>
+                  <option value="Poppins">Poppins</option>
+                  <option value="Anton">Anton</option>
+                  <option value="Oswald">Oswald</option>
+                  <option value="Impact">Impact</option>
+                  <option value="Playfair Display">Playfair Display</option>
+                  <option value="Pacifico">Pacifico</option>
+                  <option value="Bangers">Bangers</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Courier New">Courier New</option>
+                </select>
+              </label>
+              <label>Size <input type="number" id="rtext-size" min="8" max="260" value="48" /></label>
+            </div>
+            <div class="row-2">
+              <label>Fill Color <input type="color" id="rtext-color" value="#ffffff" /></label>
+              <label>Opacity % <input type="range" id="rtext-opacity" min="0" max="100" value="100" /></label>
+            </div>
+            <div class="row-2">
+              <label>Stroke Width <input type="number" id="rtext-stroke-width" min="0" max="24" value="4" /></label>
+              <label>Stroke Color <input type="color" id="rtext-stroke-color" value="#000000" /></label>
+            </div>
+            <div class="row-2">
+              <label>Shadow Blur <input type="number" id="rtext-shadow-blur" min="0" max="40" value="8" /></label>
+              <label>Shadow Color <input type="color" id="rtext-shadow-color" value="#000000" /></label>
+            </div>
+            <div class="row-2">
+              <label>Position X % <input type="number" id="rtext-x" min="0" max="100" value="50" /></label>
+              <label>Position Y % <input type="number" id="rtext-y" min="0" max="100" value="50" /></label>
+            </div>
+            <label>Rotation (deg) <input type="number" id="rtext-rotate" min="-180" max="180" value="0" /></label>
+            <div class="btn-row wrap">
+              <button class="btn" type="button" onclick="TextStudio.duplicateSelected()">📋 Duplicate</button>
+              <button class="btn danger" type="button" onclick="TextStudio.deleteSelected()">🗑 Delete</button>
+            </div>
           </section>
           <section class="tool-panel" id="rpanel-effects" hidden>
             <h2>Effects</h2>

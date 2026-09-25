@@ -530,47 +530,156 @@
       const anim = c.anim || "none";
       const ad = c.animDur || 0.6;
       let alpha = (c.opacity == null ? 1 : c.opacity);
-      let ox = 0, oy = 0, scale = 1;
-      const k = Math.min(1, local / ad);
+      let ox = 0, oy = 0, scale = 1, trackingExtra = 0;
+      const k = Math.min(1, Math.max(0, local / ad));
+
+      // In/Out Animations
       if (anim === "fadeIn") alpha *= k;
       if (anim === "fadeOut") alpha *= 1 - Math.min(1, Math.max(0, (c.duration - local) / ad));
-      if (anim === "slideLeft") ox = (1 - k) * 40;
-      if (anim === "slideRight") ox = (k - 1) * 40;
-      if (anim === "slideUp") oy = (1 - k) * 30;
-      if (anim === "slideDown") oy = (k - 1) * 30;
-      if (anim === "zoomIn") scale = 0.7 + 0.3 * k;
-      if (anim === "zoomOut") scale = 1.2 - 0.2 * k;
-      if (anim === "pop") scale = k < 1 ? 0.6 + 0.4 * k : 1;
-      let text = c.text || "";
-      if (anim === "typewriter") {
-        const n = Math.floor(k * text.length);
-        text = text.slice(0, n);
+      if (anim === "slideLeft") ox = (1 - k) * 60;
+      if (anim === "slideRight") ox = (k - 1) * 60;
+      if (anim === "slideUp") oy = (1 - k) * 50;
+      if (anim === "slideDown") oy = (k - 1) * 50;
+      if (anim === "zoomIn" || anim === "pop") scale = k < 1 ? 0.4 + 0.6 * Math.sin(k * Math.PI / 2) : 1;
+      if (anim === "zoomOut") scale = 1.3 - 0.3 * k;
+      if (anim === "bounce") {
+        scale = k < 1 ? Math.sin(k * Math.PI * 2) * (1 - k) * 0.35 + 1 : 1;
       }
+      if (anim === "tracking") trackingExtra = (1 - k) * 16;
+
+      let rawText = c.text || "";
+      if (c.uppercase) rawText = rawText.toUpperCase();
+
+      // Typewriter with blinking cursor
+      if (anim === "typewriter") {
+        const totalChars = rawText.length;
+        const n = Math.floor(k * totalChars);
+        rawText = rawText.slice(0, n);
+        if (local < ad && Math.floor(local * 5) % 2 === 0) {
+          rawText += "|";
+        }
+      }
+
+      const lines = String(rawText).split("\n");
+      const fontSize = c.size || 48;
+      const lineHeight = fontSize * (c.leading || 1.25);
+      const totalH = lines.length * lineHeight;
+
       ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(w * ((c.x || 50) / 100) + ox, h * ((c.y || 80) / 100) + oy);
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+      const posX = w * ((c.x || 50) / 100) + ox;
+      const posY = h * ((c.y || 50) / 100) + oy;
+      ctx.translate(posX, posY);
+
+      if (c.rotate) {
+        ctx.rotate((c.rotate * Math.PI) / 180);
+      }
       ctx.scale(scale, scale);
-      ctx.font = `${c.italic ? "italic " : ""}${c.bold ? "700 " : "600 "}${c.size || 48}px ${c.font || "Inter"}`;
+
+      ctx.font = `${c.italic ? "italic " : ""}${c.bold ? "700 " : "600 "}${fontSize}px ${c.font || "Inter"}, sans-serif`;
       ctx.textAlign = c.align || "center";
       ctx.textBaseline = "middle";
+
+      // Letter spacing support
+      const tracking = (c.tracking || 0) + trackingExtra;
+      if ("letterSpacing" in ctx) {
+        ctx.letterSpacing = tracking + "px";
+      }
+
+      // Measure max line width for background box
+      let maxLineWidth = 0;
+      lines.forEach((l) => {
+        const m = ctx.measureText(l);
+        if (m.width > maxLineWidth) maxLineWidth = m.width;
+      });
+
+      // Background Box / Pill
       if (c.bgOn) {
-        const m = ctx.measureText(text);
-        ctx.fillStyle = c.bg || "#000";
-        ctx.fillRect(-m.width / 2 - 8, -(c.size || 48) / 2 - 4, m.width + 16, (c.size || 48) + 8);
+        ctx.save();
+        const padX = c.bgPadX != null ? c.bgPadX : (c.bgPad != null ? c.bgPad : 16);
+        const padY = c.bgPadY != null ? c.bgPadY : 8;
+        const rad = c.bgRadius != null ? c.bgRadius : 8;
+        const boxW = maxLineWidth + padX * 2;
+        const boxH = totalH + padY * 2;
+        let boxX = -boxW / 2;
+        if (c.align === "left") boxX = -padX;
+        else if (c.align === "right") boxX = -maxLineWidth - padX;
+        const boxY = -totalH / 2 - padY;
+
+        ctx.fillStyle = c.bg || "rgba(0,0,0,0.75)";
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(boxX, boxY, boxW, boxH, rad);
+        } else {
+          ctx.rect(boxX, boxY, boxW, boxH);
+        }
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = c.border || "#000";
-      ctx.shadowColor = c.shadow || "#000";
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = c.color || "#fff";
-      if (c.underline) {
-        const m = ctx.measureText(text);
-        ctx.fillText(text, 0, 0);
-        ctx.fillRect(-m.width / 2, (c.size || 48) / 2, m.width, 2);
-      } else {
-        ctx.strokeText(text, 0, 0);
-        ctx.fillText(text, 0, 0);
+
+      // Prepare fill style (Solid or Gradient)
+      let fillStyle = c.color || "#ffffff";
+      if (c.fillType === "gradient" && c.color2) {
+        const grad = ctx.createLinearGradient(-maxLineWidth / 2, -totalH / 2, maxLineWidth / 2, totalH / 2);
+        grad.addColorStop(0, c.color || "#ffffff");
+        grad.addColorStop(1, c.color2 || "#38bdf8");
+        fillStyle = grad;
       }
+
+      // Glitch RGB split effect
+      const isGlitch = anim === "glitch" && (Math.sin(local * 25) > 0.4);
+
+      // Render each line
+      lines.forEach((line, idx) => {
+        const lineY = -totalH / 2 + (idx + 0.5) * lineHeight;
+
+        if (isGlitch) {
+          ctx.save();
+          ctx.fillStyle = "rgba(0, 255, 255, 0.7)";
+          ctx.fillText(line, -3, lineY - 2);
+          ctx.fillStyle = "rgba(255, 0, 80, 0.7)";
+          ctx.fillText(line, 3, lineY + 2);
+          ctx.restore();
+        }
+
+        // Stroke / Outline
+        if (c.strokeOn || c.strokeWidth || c.border) {
+          ctx.save();
+          ctx.lineWidth = c.strokeWidth != null ? c.strokeWidth : (c.border ? 3 : 0);
+          ctx.strokeStyle = c.strokeColor || c.border || "#000000";
+          ctx.lineJoin = "round";
+          ctx.lineCap = "round";
+          ctx.strokeText(line, 0, lineY);
+          ctx.restore();
+        }
+
+        // Shadow / Glow
+        if (c.shadowOn !== false && (c.shadow || c.shadowColor)) {
+          ctx.shadowColor = c.shadowColor || c.shadow || "rgba(0,0,0,0.8)";
+          ctx.shadowBlur = c.shadowBlur != null ? c.shadowBlur : 8;
+          ctx.shadowOffsetX = c.shadowX != null ? c.shadowX : 2;
+          ctx.shadowOffsetY = c.shadowY != null ? c.shadowY : 3;
+        } else {
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        }
+
+        ctx.fillStyle = fillStyle;
+        ctx.fillText(line, 0, lineY);
+
+        // Underline
+        if (c.underline) {
+          const m = ctx.measureText(line);
+          let ulX = -m.width / 2;
+          if (c.align === "left") ulX = 0;
+          else if (c.align === "right") ulX = -m.width;
+          ctx.fillRect(ulX, lineY + fontSize * 0.45, m.width, Math.max(2, fontSize * 0.06));
+        }
+      });
+
       ctx.restore();
     },
     drawElement(c) {
@@ -947,6 +1056,7 @@
       }
       document.getElementById("fx-summary").textContent = c && c.effect && c.effect !== "none" ? c.effect : "No effect on selected clip.";
       if (global.ChromaKey) global.ChromaKey.syncUI();
+      if (global.TextStudio) global.TextStudio.syncUIFromClip(c);
     }
   };
 

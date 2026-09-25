@@ -1140,6 +1140,614 @@
   };
 
   // ==========================================
+  // TEXT STUDIO PRO (1-Click Styles, Lower Thirds, Multiline & Rich Typography)
+  // ==========================================
+  const TextStudio = {
+    STYLES: [
+      {
+        id: "viral",
+        name: "🔥 Viral TikTok",
+        font: "Bebas Neue",
+        size: 64,
+        color: "#ffffff",
+        strokeOn: true,
+        strokeColor: "#000000",
+        strokeWidth: 8,
+        shadowOn: true,
+        shadowColor: "rgba(0,0,0,0.85)",
+        shadowBlur: 10,
+        shadowX: 3,
+        shadowY: 4
+      },
+      {
+        id: "neon_cyan",
+        name: "⚡ Neon Cyan",
+        font: "Montserrat",
+        size: 54,
+        color: "#00ffff",
+        strokeOn: true,
+        strokeColor: "#ffffff",
+        strokeWidth: 2,
+        shadowOn: true,
+        shadowColor: "#00ffff",
+        shadowBlur: 24,
+        shadowX: 0,
+        shadowY: 0
+      },
+      {
+        id: "neon_pink",
+        name: "💖 Neon Pink",
+        font: "Pacifico",
+        size: 50,
+        color: "#ff2a85",
+        strokeOn: false,
+        shadowOn: true,
+        shadowColor: "#ff007f",
+        shadowBlur: 25,
+        shadowX: 0,
+        shadowY: 0
+      },
+      {
+        id: "gold",
+        name: "👑 Gold Luxury",
+        font: "Playfair Display",
+        size: 56,
+        fillType: "gradient",
+        color: "#ffe066",
+        color2: "#b8860b",
+        strokeOn: true,
+        strokeColor: "#4d3a04",
+        strokeWidth: 2,
+        shadowOn: true,
+        shadowColor: "rgba(0,0,0,0.75)",
+        shadowBlur: 14,
+        shadowX: 2,
+        shadowY: 4
+      },
+      {
+        id: "cinema",
+        name: "🎬 Cinema 4K",
+        font: "Inter",
+        size: 46,
+        color: "#f8fafc",
+        tracking: 8,
+        strokeOn: false,
+        shadowOn: true,
+        shadowColor: "rgba(0,0,0,0.9)",
+        shadowBlur: 16,
+        shadowX: 0,
+        shadowY: 4,
+        anim: "tracking"
+      },
+      {
+        id: "cyberpunk",
+        name: "👾 Cyberpunk",
+        font: "Oswald",
+        size: 58,
+        color: "#ffe600",
+        strokeOn: true,
+        strokeColor: "#000000",
+        strokeWidth: 6,
+        shadowOn: true,
+        shadowColor: "#00ffff",
+        shadowBlur: 16,
+        shadowX: 4,
+        shadowY: 4,
+        anim: "glitch"
+      },
+      {
+        id: "retro",
+        name: "📼 80s Synthwave",
+        font: "Anton",
+        size: 60,
+        color: "#ff71ce",
+        strokeOn: true,
+        strokeColor: "#01cdfe",
+        strokeWidth: 4,
+        shadowOn: true,
+        shadowColor: "#05ffa1",
+        shadowBlur: 12,
+        shadowX: 5,
+        shadowY: 5
+      },
+      {
+        id: "bubble",
+        name: "🧊 Subtitle Pill",
+        font: "Poppins",
+        size: 40,
+        color: "#ffffff",
+        bgOn: true,
+        bg: "rgba(15, 23, 42, 0.85)",
+        bgPadX: 18,
+        bgPadY: 10,
+        bgRadius: 12,
+        strokeOn: false,
+        shadowOn: false
+      },
+      {
+        id: "news",
+        name: "📢 Breaking News",
+        font: "Impact",
+        size: 48,
+        color: "#ffffff",
+        bgOn: true,
+        bg: "#dc2626",
+        bgPadX: 20,
+        bgPadY: 8,
+        bgRadius: 4,
+        strokeOn: true,
+        strokeColor: "#ffffff",
+        strokeWidth: 1
+      },
+      {
+        id: "comic",
+        name: "💥 Comic Pop",
+        font: "Bangers",
+        size: 64,
+        color: "#ffeb3b",
+        strokeOn: true,
+        strokeColor: "#000000",
+        strokeWidth: 8,
+        shadowOn: true,
+        shadowColor: "#f44336",
+        shadowBlur: 0,
+        shadowX: 5,
+        shadowY: 5,
+        anim: "bounce"
+      }
+    ],
+
+    LOWER_THIRDS: [
+      {
+        id: "name_bar",
+        name: "🔻 Modern Name Bar",
+        text: "ALEX RIVERA\nLead Video Producer",
+        font: "Montserrat",
+        size: 34,
+        y: 82,
+        align: "left",
+        bgOn: true,
+        bg: "rgba(9, 11, 17, 0.9)",
+        bgPadX: 20,
+        bgPadY: 12,
+        bgRadius: 6,
+        anim: "slideRight"
+      },
+      {
+        id: "social_handle",
+        name: "📢 Social Callout",
+        text: "▶ SUBSCRIBE @CreativeStudio",
+        font: "Poppins",
+        size: 32,
+        y: 85,
+        color: "#ffffff",
+        bgOn: true,
+        bg: "#e11d48",
+        bgPadX: 20,
+        bgPadY: 8,
+        bgRadius: 999,
+        anim: "pop"
+      },
+      {
+        id: "chapter",
+        name: "📍 Chapter Marker",
+        text: "CHAPTER 01 // INTRODUCTION",
+        font: "Oswald",
+        size: 28,
+        y: 15,
+        color: "#38bdf8",
+        tracking: 6,
+        anim: "slideDown"
+      },
+      {
+        id: "quote",
+        name: "💬 Quote Box",
+        text: "\"Creativity is intelligence having fun.\"\n— Albert Einstein",
+        font: "Playfair Display",
+        size: 28,
+        y: 50,
+        italic: true,
+        bgOn: true,
+        bg: "rgba(0,0,0,0.8)",
+        bgPadX: 24,
+        bgPadY: 16,
+        bgRadius: 10,
+        anim: "fadeIn"
+      }
+    ],
+
+    init() {
+      this.renderUI();
+      this.bindInputs();
+    },
+
+    renderUI() {
+      const stylesHost = document.getElementById("text-styles-grid");
+      if (stylesHost) {
+        stylesHost.innerHTML = "";
+        this.STYLES.forEach((s) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip text-style-chip";
+          btn.innerHTML = `<strong>${s.name}</strong>`;
+          btn.addEventListener("click", () => this.applyStyle(s.id));
+          stylesHost.appendChild(btn);
+        });
+      }
+
+      const ltHost = document.getElementById("text-lower-thirds-grid");
+      if (ltHost) {
+        ltHost.innerHTML = "";
+        this.LOWER_THIRDS.forEach((lt) => {
+          const card = document.createElement("div");
+          card.className = "chip lt-card";
+          card.innerHTML = `
+            <strong>${lt.name}</strong>
+            <p style="font-size:10.5px; color:var(--muted); margin:4px 0 0; white-space:pre-line;">${lt.text.split("\n")[0]}</p>
+          `;
+          card.addEventListener("click", () => this.insertLowerThird(lt.id));
+          ltHost.appendChild(card);
+        });
+      }
+    },
+
+    bindInputs() {
+      const inputs = [
+        "text-content", "text-font", "text-size", "text-color", "text-color-2",
+        "text-fill-type", "text-opacity", "text-stroke-on", "text-stroke-color",
+        "text-stroke-width", "text-shadow-on", "text-shadow-color", "text-shadow-blur",
+        "text-shadow-x", "text-shadow-y", "text-bg-on", "text-bg-color",
+        "text-bg-padx", "text-bg-pady", "text-bg-radius", "text-x", "text-y",
+        "text-rotate", "text-tracking", "text-leading", "text-anim", "text-anim-dur",
+        "rtext-content", "rtext-font", "rtext-size", "rtext-color", "rtext-opacity",
+        "rtext-stroke-width", "rtext-stroke-color", "rtext-shadow-blur",
+        "rtext-shadow-color", "rtext-x", "rtext-y", "rtext-rotate"
+      ];
+
+      inputs.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("input", () => this.updateClipFromUI(id));
+          el.addEventListener("change", () => this.updateClipFromUI(id));
+        }
+      });
+
+      document.querySelectorAll("[data-text-style]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const c = Editor.selected();
+          if (!c || c.type !== "text") return;
+          const st = b.dataset.textStyle;
+          c[st] = !c[st];
+          Overlay.draw();
+        });
+      });
+
+      document.querySelectorAll("[data-text-align]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const c = Editor.selected();
+          if (!c || c.type !== "text") return;
+          c.align = b.dataset.textAlign;
+          Overlay.draw();
+        });
+      });
+    },
+
+    applyStyle(styleId) {
+      const s = this.STYLES.find((x) => x.id === styleId);
+      if (!s) return;
+      let c = Editor.selected();
+      if (!c || c.type !== "text") {
+        c = this.createNewTextClip(s.name.replace(/^[^\s]+\s+/, ""));
+      }
+      Object.assign(c, {
+        font: s.font,
+        size: s.size,
+        color: s.color,
+        color2: s.color2 || "#38bdf8",
+        fillType: s.fillType || "solid",
+        strokeOn: s.strokeOn || false,
+        strokeColor: s.strokeColor || "#000000",
+        strokeWidth: s.strokeWidth || 0,
+        shadowOn: s.shadowOn || false,
+        shadowColor: s.shadowColor || "rgba(0,0,0,0.8)",
+        shadowBlur: s.shadowBlur != null ? s.shadowBlur : 8,
+        shadowX: s.shadowX != null ? s.shadowX : 2,
+        shadowY: s.shadowY != null ? s.shadowY : 3,
+        bgOn: s.bgOn || false,
+        bg: s.bg || "rgba(0,0,0,0.8)",
+        bgPadX: s.bgPadX != null ? s.bgPadX : 16,
+        bgPadY: s.bgPadY != null ? s.bgPadY : 8,
+        bgRadius: s.bgRadius != null ? s.bgRadius : 8,
+        tracking: s.tracking || 0,
+        anim: s.anim || "none"
+      });
+      this.syncUIFromClip(c);
+      Overlay.draw();
+      Timeline.render();
+      UI.toast(`Applied style: ${s.name}`);
+    },
+
+    insertLowerThird(ltId) {
+      const lt = this.LOWER_THIRDS.find((x) => x.id === ltId);
+      if (!lt) return;
+      const c = this.createNewTextClip(lt.text);
+      Object.assign(c, {
+        font: lt.font || "Inter",
+        size: lt.size || 34,
+        y: lt.y || 80,
+        align: lt.align || "center",
+        color: lt.color || "#ffffff",
+        bgOn: lt.bgOn || false,
+        bg: lt.bg || "rgba(0,0,0,0.8)",
+        bgPadX: lt.bgPadX || 16,
+        bgPadY: lt.bgPadY || 8,
+        bgRadius: lt.bgRadius || 8,
+        italic: lt.italic || false,
+        tracking: lt.tracking || 0,
+        anim: lt.anim || "slideUp",
+        duration: 4.5
+      });
+      this.syncUIFromClip(c);
+      Overlay.draw();
+      Timeline.render();
+      UI.toast(`Inserted ${lt.name}`);
+    },
+
+    createNewTextClip(initialText = "Your Text Here") {
+      const clip = {
+        id: uid("clip"),
+        type: "text",
+        track: "text",
+        start: Editor.playhead,
+        duration: 4,
+        text: initialText,
+        font: document.getElementById("text-font")?.value || "Inter",
+        size: Number(document.getElementById("text-size")?.value) || 48,
+        color: document.getElementById("text-color")?.value || "#ffffff",
+        color2: document.getElementById("text-color-2")?.value || "#38bdf8",
+        fillType: document.getElementById("text-fill-type")?.value || "solid",
+        opacity: Number(document.getElementById("text-opacity")?.value || 100) / 100,
+        x: 50,
+        y: 50,
+        rotate: 0,
+        align: "center",
+        strokeOn: document.getElementById("text-stroke-on")?.checked ?? true,
+        strokeColor: document.getElementById("text-stroke-color")?.value || "#000000",
+        strokeWidth: Number(document.getElementById("text-stroke-width")?.value) || 4,
+        shadowOn: document.getElementById("text-shadow-on")?.checked ?? true,
+        shadowColor: document.getElementById("text-shadow-color")?.value || "rgba(0,0,0,0.8)",
+        shadowBlur: Number(document.getElementById("text-shadow-blur")?.value) || 8,
+        shadowX: Number(document.getElementById("text-shadow-x")?.value) || 2,
+        shadowY: Number(document.getElementById("text-shadow-y")?.value) || 3,
+        bgOn: document.getElementById("text-bg-on")?.checked ?? false,
+        bg: document.getElementById("text-bg-color")?.value || "#000000",
+        bgPadX: Number(document.getElementById("text-bg-padx")?.value) || 16,
+        bgPadY: Number(document.getElementById("text-bg-pady")?.value) || 8,
+        bgRadius: Number(document.getElementById("text-bg-radius")?.value) || 8,
+        tracking: Number(document.getElementById("text-tracking")?.value) || 0,
+        leading: Number(document.getElementById("text-leading")?.value) || 1.25,
+        anim: document.getElementById("text-anim")?.value || "fadeIn",
+        animDur: Number(document.getElementById("text-anim-dur")?.value) || 0.6
+      };
+      Editor.addClip(clip);
+      Editor.selectedId = clip.id;
+      return clip;
+    },
+
+    addCurrentToTimeline() {
+      const txt = document.getElementById("text-content")?.value || "Awesome Video";
+      this.createNewTextClip(txt);
+      Overlay.draw();
+      Timeline.render();
+      UI.toast("Text layer added to timeline");
+    },
+
+    duplicateSelected() {
+      const c = Editor.selected();
+      if (!c || c.type !== "text") return;
+      const dup = { ...c, id: uid("clip"), start: c.start + 0.5 };
+      Editor.addClip(dup);
+      Editor.selectedId = dup.id;
+      this.syncUIFromClip(dup);
+      Overlay.draw();
+      Timeline.render();
+      UI.toast("Text layer duplicated");
+    },
+
+    deleteSelected() {
+      const c = Editor.selected();
+      if (!c || c.type !== "text") return;
+      Editor.removeClip(c.id);
+      Editor.selectedId = null;
+      Overlay.draw();
+      Timeline.render();
+      UI.toast("Text layer deleted");
+    },
+
+    syncUIFromClip(c) {
+      if (!c || c.type !== "text") return;
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val != null) el.value = val;
+      };
+      const setChk = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val != null) el.checked = !!val;
+      };
+
+      setVal("text-content", c.text || "");
+      setVal("rtext-content", c.text || "");
+      setVal("text-font", c.font || "Inter");
+      setVal("rtext-font", c.font || "Inter");
+      setVal("text-size", c.size || 48);
+      setVal("rtext-size", c.size || 48);
+      setVal("text-color", c.color || "#ffffff");
+      setVal("rtext-color", c.color || "#ffffff");
+      setVal("text-color-2", c.color2 || "#38bdf8");
+      setVal("text-fill-type", c.fillType || "solid");
+      setVal("text-opacity", Math.round((c.opacity == null ? 1 : c.opacity) * 100));
+      setVal("rtext-opacity", Math.round((c.opacity == null ? 1 : c.opacity) * 100));
+
+      setChk("text-stroke-on", c.strokeOn);
+      setVal("text-stroke-color", c.strokeColor || c.border || "#000000");
+      setVal("rtext-stroke-color", c.strokeColor || c.border || "#000000");
+      setVal("text-stroke-width", c.strokeWidth != null ? c.strokeWidth : (c.border ? 3 : 0));
+      setVal("rtext-stroke-width", c.strokeWidth != null ? c.strokeWidth : (c.border ? 3 : 0));
+
+      setChk("text-shadow-on", c.shadowOn !== false);
+      setVal("text-shadow-color", c.shadowColor || c.shadow || "#000000");
+      setVal("rtext-shadow-color", c.shadowColor || c.shadow || "#000000");
+      setVal("text-shadow-blur", c.shadowBlur != null ? c.shadowBlur : 8);
+      setVal("rtext-shadow-blur", c.shadowBlur != null ? c.shadowBlur : 8);
+      setVal("text-shadow-x", c.shadowX != null ? c.shadowX : 2);
+      setVal("text-shadow-y", c.shadowY != null ? c.shadowY : 3);
+
+      setChk("text-bg-on", c.bgOn);
+      setVal("text-bg-color", c.bg || "#000000");
+      setVal("text-bg-padx", c.bgPadX != null ? c.bgPadX : 16);
+      setVal("text-bg-pady", c.bgPadY != null ? c.bgPadY : 8);
+      setVal("text-bg-radius", c.bgRadius != null ? c.bgRadius : 8);
+
+      setVal("text-x", c.x != null ? c.x : 50);
+      setVal("rtext-x", c.x != null ? c.x : 50);
+      setVal("text-y", c.y != null ? c.y : 50);
+      setVal("rtext-y", c.y != null ? c.y : 50);
+      setVal("text-rotate", c.rotate || 0);
+      setVal("rtext-rotate", c.rotate || 0);
+      setVal("text-tracking", c.tracking || 0);
+      setVal("text-leading", c.leading || 1.25);
+      setVal("text-anim", c.anim || "none");
+      setVal("text-anim-dur", c.animDur || 0.6);
+    },
+
+    updateClipFromUI(changedId) {
+      const c = Editor.selected();
+      if (!c || c.type !== "text") return;
+
+      const getVal = (id) => document.getElementById(id)?.value;
+      const getNum = (id, def) => Number(getVal(id)) || def;
+      const getChk = (id) => document.getElementById(id)?.checked;
+
+      if (changedId === "rtext-content") {
+        c.text = getVal("rtext-content");
+        const el = document.getElementById("text-content");
+        if (el) el.value = c.text;
+      } else if (changedId === "text-content") {
+        c.text = getVal("text-content");
+        const el = document.getElementById("rtext-content");
+        if (el) el.value = c.text;
+      }
+
+      if (changedId === "rtext-font") {
+        c.font = getVal("rtext-font");
+        const el = document.getElementById("text-font");
+        if (el) el.value = c.font;
+      } else {
+        c.font = getVal("text-font") || c.font;
+      }
+
+      if (changedId === "rtext-size") {
+        c.size = getNum("rtext-size", 48);
+        const el = document.getElementById("text-size");
+        if (el) el.value = c.size;
+      } else {
+        c.size = getNum("text-size", 48);
+      }
+
+      if (changedId === "rtext-color") {
+        c.color = getVal("rtext-color");
+        const el = document.getElementById("text-color");
+        if (el) el.value = c.color;
+      } else {
+        c.color = getVal("text-color") || c.color;
+      }
+
+      c.color2 = getVal("text-color-2") || c.color2;
+      c.fillType = getVal("text-fill-type") || "solid";
+
+      if (changedId === "rtext-opacity") {
+        c.opacity = getNum("rtext-opacity", 100) / 100;
+        const el = document.getElementById("text-opacity");
+        if (el) el.value = Math.round(c.opacity * 100);
+      } else {
+        c.opacity = getNum("text-opacity", 100) / 100;
+      }
+
+      c.strokeOn = getChk("text-stroke-on");
+      if (changedId === "rtext-stroke-width") {
+        c.strokeWidth = getNum("rtext-stroke-width", 4);
+        const el = document.getElementById("text-stroke-width");
+        if (el) el.value = c.strokeWidth;
+      } else {
+        c.strokeWidth = getNum("text-stroke-width", 4);
+      }
+      if (changedId === "rtext-stroke-color") {
+        c.strokeColor = getVal("rtext-stroke-color");
+        const el = document.getElementById("text-stroke-color");
+        if (el) el.value = c.strokeColor;
+      } else {
+        c.strokeColor = getVal("text-stroke-color") || c.strokeColor;
+      }
+
+      c.shadowOn = getChk("text-shadow-on");
+      if (changedId === "rtext-shadow-blur") {
+        c.shadowBlur = getNum("rtext-shadow-blur", 8);
+        const el = document.getElementById("text-shadow-blur");
+        if (el) el.value = c.shadowBlur;
+      } else {
+        c.shadowBlur = getNum("text-shadow-blur", 8);
+      }
+      if (changedId === "rtext-shadow-color") {
+        c.shadowColor = getVal("rtext-shadow-color");
+        const el = document.getElementById("text-shadow-color");
+        if (el) el.value = c.shadowColor;
+      } else {
+        c.shadowColor = getVal("text-shadow-color") || c.shadowColor;
+      }
+      c.shadowX = getNum("text-shadow-x", 2);
+      c.shadowY = getNum("text-shadow-y", 3);
+
+      c.bgOn = getChk("text-bg-on");
+      c.bg = getVal("text-bg-color") || c.bg;
+      c.bgPadX = getNum("text-bg-padx", 16);
+      c.bgPadY = getNum("text-bg-pady", 8);
+      c.bgRadius = getNum("text-bg-radius", 8);
+
+      if (changedId === "rtext-x") {
+        c.x = getNum("rtext-x", 50);
+        const el = document.getElementById("text-x");
+        if (el) el.value = c.x;
+      } else {
+        c.x = getNum("text-x", 50);
+      }
+
+      if (changedId === "rtext-y") {
+        c.y = getNum("rtext-y", 50);
+        const el = document.getElementById("text-y");
+        if (el) el.value = c.y;
+      } else {
+        c.y = getNum("text-y", 50);
+      }
+
+      if (changedId === "rtext-rotate") {
+        c.rotate = getNum("rtext-rotate", 0);
+        const el = document.getElementById("text-rotate");
+        if (el) el.value = c.rotate;
+      } else {
+        c.rotate = getNum("text-rotate", 0);
+      }
+
+      c.tracking = getNum("text-tracking", 0);
+      c.leading = getNum("text-leading", 1.25);
+      c.anim = getVal("text-anim") || "none";
+      c.animDur = getNum("text-anim-dur", 0.6);
+
+      Overlay.draw();
+      Timeline.render();
+    }
+  };
+
+  // ==========================================
   // EXPOSE GLOBAL API & INTEGRATION HOOKS
   // ==========================================
   global.ChromaKey = ChromaKey;
@@ -1150,13 +1758,16 @@
   global.CanvasInteraction = CanvasInteraction;
   global.ProjectIO = ProjectIO;
   global.CommandPalette = CommandPalette;
+  global.TextStudio = TextStudio;
 
-  // Initialize all uncommon features when DOM is ready
+  // Initialize all features when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
     SoundFX.renderUI();
     TTSVoiceover.init();
     Stickers.renderUI();
     CanvasInteraction.init();
     CommandPalette.init();
+    TextStudio.init();
   });
 })(window);
+
