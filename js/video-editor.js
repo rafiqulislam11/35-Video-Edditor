@@ -156,7 +156,7 @@
       this._lastTick = now;
 
       const clip = this.activeVideoClip();
-      if (clip && clip.type === "image") {
+      if (!clip || clip.type !== "video") {
         Editor.playhead += dt * this.rate;
         const totalDur = Editor.duration() || 1;
         if (Editor.playhead >= totalDur) {
@@ -229,7 +229,15 @@
       const clip = this.activeVideoClip();
       const empty = document.getElementById("empty-preview");
       if (!clip) {
-        if (!this.video.src) empty.classList.remove("hidden");
+        const hasOtherContent = (Editor.project.clips || []).some((c) => Editor.playhead >= c.start && Editor.playhead < c.start + c.duration);
+        if (!hasOtherContent && !this.video.src) {
+          if (empty) empty.classList.remove("hidden");
+        } else {
+          if (empty) empty.classList.add("hidden");
+        }
+        this.video.style.opacity = "0";
+        if (!this.video.paused) this.video.pause();
+        this.syncAudio(forceSeek);
         this.updateChrome();
         return;
       }
@@ -678,6 +686,9 @@
 
       if (c.rotate) {
         ctx.rotate((c.rotate * Math.PI) / 180);
+      }
+      if (scale !== 1) {
+        ctx.scale(scale, scale);
       }
       // Multilingual & script direction (Arabic RTL & Bangla conjuncts)
       const isArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(rawText);

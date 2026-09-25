@@ -115,7 +115,11 @@
       Editor.project.subtitles.forEach((s) => {
         if (t < s.start || t >= s.end) return;
         ctx.save();
-        ctx.font = `600 ${s.size || 28}px ${s.font || "Inter"}`;
+        const isArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s.text);
+        if ("direction" in ctx) {
+          ctx.direction = isArabic ? "rtl" : "ltr";
+        }
+        ctx.font = `600 ${s.size || 28}px "${s.font || "Hind Siliguri"}", "Hind Siliguri", "Noto Sans Bengali", "Cairo", "Amiri", "Noto Sans Arabic", "Inter", sans-serif`;
         ctx.textAlign = s.align || "center";
         ctx.textBaseline = "middle";
         const x = w / 2;

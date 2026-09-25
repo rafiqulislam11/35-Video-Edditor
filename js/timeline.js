@@ -21,12 +21,50 @@
         this.snapOn = e.target.checked;
       });
       const scroll = document.getElementById("timeline-scroll");
-      scroll.addEventListener("click", (e) => {
+      const ruler = document.getElementById("time-ruler");
+      const ph = document.getElementById("playhead");
+
+      const scrubAt = (clientX) => {
+        const scrollRect = scroll.getBoundingClientRect();
+        const scrollLeft = scroll.scrollLeft;
+        const relativeX = clientX - scrollRect.left + scrollLeft - 92;
+        const t = Math.max(0, relativeX / this.pps());
+        Player.seekTimeline(t);
+      };
+
+      const startScrub = (e) => {
         if (e.target.closest(".clip") || e.target.closest(".track-head")) return;
-        const lane = e.target.closest(".track-lane");
-        const x = e.offsetX;
-        Editor.playhead = Math.max(0, x / this.pps());
-        Player.seekTimeline(Editor.playhead);
+        const isTouch = !!e.touches;
+        const getX = (ev) => ev.touches ? ev.touches[0].clientX : ev.clientX;
+        scrubAt(getX(e));
+        const move = (ev) => scrubAt(getX(ev));
+        const stop = () => {
+          window.removeEventListener("mousemove", move);
+          window.removeEventListener("mouseup", stop);
+          window.removeEventListener("touchmove", move);
+          window.removeEventListener("touchend", stop);
+        };
+        if (isTouch) {
+          window.addEventListener("touchmove", move, { passive: true });
+          window.addEventListener("touchend", stop);
+        } else {
+          window.addEventListener("mousemove", move);
+          window.addEventListener("mouseup", stop);
+        }
+      };
+
+      if (ruler) {
+        ruler.addEventListener("mousedown", startScrub);
+        ruler.addEventListener("touchstart", startScrub, { passive: true });
+      }
+      if (ph) {
+        ph.addEventListener("mousedown", startScrub);
+        ph.addEventListener("touchstart", startScrub, { passive: true });
+      }
+
+      scroll.addEventListener("click", (e) => {
+        if (e.target.closest(".clip") || e.target.closest(".track-head") || e.target.closest("#time-ruler")) return;
+        scrubAt(e.clientX);
       });
       scroll.addEventListener("wheel", (e) => {
         if (!e.ctrlKey) return;
@@ -113,11 +151,45 @@
           if (mediaId) {
             const m = Editor.media.get(mediaId);
             if (!m) return;
-            if (!/^video\//.test(m.info.type) && tr.type !== "audio") return;
-            const type = /^audio\//.test(m.info.type) ? "audio" : "video";
-            const duration = Math.max(0.1, m.info.duration || 1);
-            const c = {id:uid("clip"),type,track:tr.id,sourceId:mediaId,start:t,inPoint:0,outPoint:duration,duration,speed:1,volume:1,rotate:0,flipH:false,flipV:false,filter:"original",filterIntensity:1,adjustments:EffectsStudio.defaultAdjust(),effect:"none",intensity:50,transition:"none",transDur:.5,fadeIn:0,fadeOut:0};
-            Editor.addClip(c); if (type === "video") Player.load(m);
+            const isImg = m.isImage || (m.info && (m.info.type === "image" || /^image\//.test(m.info.type)));
+            const isAud = m.info && /^audio\//.test(m.info.type);
+            const isVid = m.info && /^video\//.test(m.info.type);
+
+            if (tr.type === "audio") {
+              if (!isAud) return;
+            } else {
+              if (!isVid && !isImg) return;
+            }
+
+            const type = isAud ? "audio" : isImg ? "image" : "video";
+            const duration = Math.max(0.1, m.info?.duration || (isImg ? 4.0 : 1));
+            const c = {
+              id: uid("clip"),
+              type,
+              track: tr.id,
+              sourceId: mediaId,
+              start: t,
+              inPoint: 0,
+              outPoint: duration,
+              duration,
+              speed: 1,
+              volume: 1,
+              rotate: 0,
+              flipH: false,
+              flipV: false,
+              filter: "original",
+              filterIntensity: 1,
+              adjustments: EffectsStudio.defaultAdjust(),
+              effect: "none",
+              intensity: 50,
+              transition: "none",
+              transDur: 0.5,
+              fadeIn: 0,
+              fadeOut: 0,
+              kenBurns: isImg ? "zoomIn" : "none"
+            };
+            Editor.addClip(c);
+            if (type === "video" || type === "image") Player.load(m);
           } else if (clipId) {
             const c=Editor.clip(clipId); if(c && !tr.locked){ c.track=tr.id; c.start=t; Timeline.render(); }
           }
@@ -173,18 +245,21 @@
       el.append(hl, hr);
       el.draggable = true;
       el.addEventListener("dragstart", (e) => { e.dataTransfer.setData("application/x-aive-clip", c.id); e.dataTransfer.effectAllowed = "move"; });
-      el.addEventListener("mousedown", (e) => {
+      const handleDown = (e) => {
         if (tr.locked) return;
         Editor.selectedId = c.id;
         Props.refresh();
         document.querySelectorAll(".clip").forEach((x) => x.classList.remove("selected"));
         el.classList.add("selected");
-        if (e.target.classList.contains("handle")) {
-          this.beginResize(c, e, e.target.classList.contains("r"));
+        const target = e.target;
+        if (target && target.classList && target.classList.contains("handle")) {
+          this.beginResize(c, e, target.classList.contains("r"));
         } else {
           this.beginDrag(c, e);
         }
-      });
+      };
+      el.addEventListener("mousedown", handleDown);
+      el.addEventListener("touchstart", handleDown, { passive: true });
       return el;
     },
 
@@ -215,10 +290,12 @@
     },
 
     beginDrag(c, e) {
-      const startX = e.clientX;
+      const isTouch = !!e.touches;
+      const startX = isTouch ? e.touches[0].clientX : e.clientX;
       const orig = c.start;
       const move = (ev) => {
-        let t = orig + (ev.clientX - startX) / this.pps();
+        const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        let t = orig + (cx - startX) / this.pps();
         t = this.snapTime(Math.max(0,t), c.track, c.id);
         c.start = t;
         this.render();
@@ -226,21 +303,30 @@
       const up = () => {
         window.removeEventListener("mousemove", move);
         window.removeEventListener("mouseup", up);
+        window.removeEventListener("touchmove", move);
+        window.removeEventListener("touchend", up);
       };
       History.push();
-      window.addEventListener("mousemove", move);
-      window.addEventListener("mouseup", up);
+      if (isTouch) {
+        window.addEventListener("touchmove", move, { passive: true });
+        window.addEventListener("touchend", up);
+      } else {
+        window.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", up);
+      }
     },
 
     beginResize(c, e, right) {
-      e.stopPropagation();
-      const startX = e.clientX;
+      if (e.stopPropagation) e.stopPropagation();
+      const isTouch = !!e.touches;
+      const startX = isTouch ? e.touches[0].clientX : e.clientX;
       const origDur = c.duration;
       const origStart = c.start;
       const origIn = c.inPoint || 0;
       const origOut = c.outPoint || c.duration;
       const move = (ev) => {
-        const dt = (ev.clientX - startX) / this.pps();
+        const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        const dt = (cx - startX) / this.pps();
         if (right) {
           c.duration = Math.max(0.1, origDur + dt);
           if (c.outPoint != null) c.outPoint = origIn + c.duration * (c.speed || 1);
@@ -256,10 +342,17 @@
       const up = () => {
         window.removeEventListener("mousemove", move);
         window.removeEventListener("mouseup", up);
+        window.removeEventListener("touchmove", move);
+        window.removeEventListener("touchend", up);
       };
       History.push();
-      window.addEventListener("mousemove", move);
-      window.addEventListener("mouseup", up);
+      if (isTouch) {
+        window.addEventListener("touchmove", move, { passive: true });
+        window.addEventListener("touchend", up);
+      } else {
+        window.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", up);
+      }
     },
 
     updatePlayhead() {

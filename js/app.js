@@ -346,7 +346,11 @@
       History.push();
       this.project.clips = this.project.clips.filter((c) => c.id !== id);
       if (this.selectedId === id) this.selectedId = null;
+      this.project.modified = Date.now();
       Timeline.render();
+      Props.refresh();
+      Overlay.draw();
+      Player.sync();
     }
   };
 

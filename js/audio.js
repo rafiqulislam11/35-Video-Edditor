@@ -74,6 +74,7 @@
 
     previewTone(i) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") ctx.resume();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       const spec = this.toneSpec(i);
@@ -85,6 +86,7 @@
       osc.connect(gain).connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 1.5);
+      setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1600);
     },
 
     async addTone(genre, i) {

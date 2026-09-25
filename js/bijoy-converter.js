@@ -26,8 +26,8 @@
 
   const BIJOY_MODIFIER = {
     "v": "া", "w": "ি", "x": "ী", "y": "ু", "~": "ূ",
-    "„": "ৃ", "‡": "ে", "‰": "ৈ", "Š": "ৌ",
-    "&": "্", "¨": "্য", "ª": "্র", "©": "র্"
+    "„": "ৃ", "‡": "ে", "†": "ে", "‰": "ৈ", "Š": "ৌ",
+    "&": "্", "¨": "্য", "ª": "্র", "©": "র্", "¦": "্ব"
   };
 
   // Complex multi-character and special glyph mappings in SutonnyMJ
@@ -161,19 +161,19 @@
       let s = text;
 
       // 1. Dual kar combinations in Bijoy:
-      // ‡ + Consonant cluster + v = ো (O-kar)
-      // ‡ + Consonant cluster + Š = ৌ (OU-kar)
-      const dualKarO = new RegExp("‡(" + CLUSTER_PATTERN + ")v", "g");
-      const dualKarOU = new RegExp("‡(" + CLUSTER_PATTERN + ")Š", "g");
+      // ‡ / † + Consonant cluster + v = ো (O-kar)
+      // ‡ / † + Consonant cluster + Š = ৌ (OU-kar)
+      const dualKarO = new RegExp("[‡†](" + CLUSTER_PATTERN + ")v", "g");
+      const dualKarOU = new RegExp("[‡†](" + CLUSTER_PATTERN + ")Š", "g");
       s = s.replace(dualKarO, "$1ো");
       s = s.replace(dualKarOU, "$1ৌ");
 
       // 2. Pre-kar rearrangement:
-      // w (ি), ‡ (ে), ‰ (ৈ) precede ONE consonant/conjunct unit:
-      const preKarRegex = new RegExp("([w‡‰])(" + CLUSTER_PATTERN + ")", "g");
+      // w (ি), ‡ / † (ে), ‰ (ৈ) precede ONE consonant/conjunct unit:
+      const preKarRegex = new RegExp("([w‡†‰])(" + CLUSTER_PATTERN + ")", "g");
       s = s.replace(preKarRegex, function (match, kar, cluster) {
         let uKar = "ি";
-        if (kar === "‡") uKar = "ে";
+        if (kar === "‡" || kar === "†") uKar = "ে";
         if (kar === "‰") uKar = "ৈ";
         return cluster + uKar;
       });
