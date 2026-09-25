@@ -151,14 +151,20 @@
 
     clipEl(c, tr) {
       const el = document.createElement("div");
-      el.className = "clip " + (c.type === "video" ? "" : c.type === "audio" ? "audio" : c.type === "text" ? "text" : c.type === "sub" ? "sub" : "fx");
+      const typeClass = c.type === "video" ? "" :
+                        c.type === "audio" ? "audio" :
+                        c.type === "text" ? "text" :
+                        c.type === "sub" ? "sub" :
+                        c.type === "image" ? "image" :
+                        c.type === "sticker" ? "sticker" : "fx";
+      el.className = "clip " + typeClass;
       if (c.id === Editor.selectedId) el.classList.add("selected");
       el.style.left = c.start * this.pps() + "px";
       el.style.width = Math.max(16, c.duration * this.pps()) + "px";
       const title = c.text || (c.sourceId && Editor.media.get(c.sourceId)?.info.name) || c.type;
       el.textContent = (c.demo ? "[Demo] " : "") + title;
       el.title = title;
-      if (c.type === "video" && c.sourceId) this.decorateThumbnail(el, c);
+      if ((c.type === "video" || c.type === "image") && c.sourceId) this.decorateThumbnail(el, c);
       if (c.type === "audio" && c.sourceId) this.decorateWaveform(el, c);
       const hl = document.createElement("span");
       hl.className = "handle l";
@@ -193,6 +199,12 @@
 
     decorateThumbnail(el,c){
       const m=Editor.media.get(c.sourceId); if(!m) return;
+      if (c.type === "image" && m.url) {
+        el.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.55)),url(${m.url})`;
+        el.style.backgroundSize="cover";
+        el.style.backgroundPosition="center";
+        return;
+      }
       const v=document.createElement("video"); v.src=m.url; v.muted=true; v.preload="metadata"; v.currentTime=Math.max(0,c.inPoint||0);
       v.addEventListener("loadeddata",()=>{const cv=document.createElement("canvas");cv.width=160;cv.height=70;const x=cv.getContext("2d");x.drawImage(v,0,0,cv.width,cv.height);el.style.backgroundImage=`linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.55)),url(${cv.toDataURL("image/jpeg",.7)})`;el.style.backgroundSize="cover";el.style.backgroundPosition="center";},{once:true});
     },
@@ -287,6 +299,25 @@
     deleteSelected() {
       if (!Editor.selectedId) return;
       Editor.removeClip(Editor.selectedId);
+    },
+
+    rippleDeleteSelected() {
+      if (!Editor.selectedId) return;
+      const c = Editor.selected();
+      if (!c) return;
+      History.push();
+      const deletedTrack = c.track;
+      const deletedStart = c.start;
+      const deletedDur = c.duration;
+      Editor.removeClip(c.id);
+      // Shift all clips following the deleted clip on the same track to close the gap
+      Editor.project.clips.forEach((other) => {
+        if (other.track === deletedTrack && other.start >= deletedStart + deletedDur - 0.05) {
+          other.start = Math.max(0, other.start - deletedDur);
+        }
+      });
+      this.render();
+      UI.toast("Ripple delete: gap closed! ⚡");
     },
 
     copySelected() {

@@ -43,6 +43,51 @@
         e.preventDefault();
         VideoEditor.ingestFiles(e.dataTransfer.files);
       });
+
+      // Stage Toolbar — Aspect Ratio Buttons
+      document.querySelectorAll("[data-aspect]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-aspect]").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          const asp = btn.dataset.aspect;
+          let w = 1920, h = 1080;
+          if (asp === "9:16") { w = 1080; h = 1920; }
+          else if (asp === "1:1") { w = 1080; h = 1080; }
+          else if (asp === "4:5") { w = 1080; h = 1350; }
+          else if (asp === "21:9") { w = 2560; h = 1080; }
+          else { w = 1920; h = 1080; }
+
+          const cw = document.getElementById("custom-w");
+          const ch = document.getElementById("custom-h");
+          if (cw) cw.value = w;
+          if (ch) ch.value = h;
+          VideoEditor.applyResize();
+        });
+      });
+
+      // Stage Toolbar — Safe Grid Toggle
+      const gridBtn = document.getElementById("toggle-grid-btn");
+      if (gridBtn) {
+        gridBtn.addEventListener("click", () => {
+          Overlay.showGrid = !Overlay.showGrid;
+          gridBtn.classList.toggle("active", Overlay.showGrid);
+          Overlay.draw();
+          UI.toast(Overlay.showGrid ? "📐 Rule of Thirds & Safe Grid: ON" : "📐 Safe Grid: OFF");
+        });
+      }
+
+      // Stage Toolbar — Fit Canvas
+      const fitBtn = document.getElementById("canvas-fit-btn");
+      if (fitBtn) {
+        fitBtn.addEventListener("click", () => {
+          const mon = document.getElementById("monitor");
+          if (mon) {
+            mon.style.maxWidth = "min(100%, 960px)";
+            Overlay.resize();
+            UI.toast("Monitor: Fit View");
+          }
+        });
+      }
     },
 
     cmd(name) {
@@ -90,6 +135,9 @@
       Editor.playing = false;
       document.getElementById("btn-play").textContent = "▶";
       this.video.pause();
+      if (this._audioPool) {
+        this._audioPool.forEach((a) => { if (!a.paused) a.pause(); });
+      }
       cancelAnimationFrame(this.raf);
     },
 
@@ -179,7 +227,59 @@
       this.video.volume = Math.min(1, Math.max(0, vol));
       EffectsStudio.applyToVideo(this.video, clip);
       this.applyTransform(clip);
+      this.syncAudio(forceSeek);
       this.updateChrome();
+    },
+
+    syncAudio(forceSeek) {
+      if (!this._audioPool) this._audioPool = new Map();
+      const t = Editor.playhead;
+      const masterMute = document.getElementById("audio-mute") ? document.getElementById("audio-mute").checked : false;
+      const masterVol = document.getElementById("audio-volume") ? Number(document.getElementById("audio-volume").value) / 100 : 1;
+
+      const activeAudioClips = Editor.project.clips.filter((c) =>
+        c.type === "audio" &&
+        c.sourceId &&
+        !this.trackMuted(c.track)
+      );
+
+      const activeIds = new Set();
+      activeAudioClips.forEach((c) => {
+        const on = t >= c.start && t < c.start + c.duration;
+        if (!on) return;
+        activeIds.add(c.id);
+
+        const m = Editor.media.get(c.sourceId);
+        if (!m || !m.url) return;
+
+        let a = this._audioPool.get(c.id);
+        if (!a) {
+          a = new Audio(m.url);
+          a.preload = "auto";
+          this._audioPool.set(c.id, a);
+        }
+
+        const local = (c.inPoint || 0) + (t - c.start) * (c.speed || 1);
+        if (forceSeek || Math.abs(a.currentTime - local) > 0.25) {
+          a.currentTime = local;
+        }
+
+        let vol = c.volume == null ? 1 : c.volume;
+        const rel = t - c.start;
+        if (c.fadeIn && rel < c.fadeIn) vol *= (rel / c.fadeIn);
+        const rem = (c.start + c.duration) - t;
+        if (c.fadeOut && rem < c.fadeOut) vol *= (rem / c.fadeOut);
+        a.volume = masterMute ? 0 : Math.max(0, Math.min(1, vol * masterVol));
+
+        if (Editor.playing && a.paused) a.play().catch(() => {});
+        else if (!Editor.playing && !a.paused) a.pause();
+      });
+
+      for (const [id, a] of this._audioPool) {
+        if (!activeIds.has(id)) {
+          if (!a.paused) a.pause();
+        }
+      }
     },
 
     applyTransform(clip) {
@@ -210,12 +310,30 @@
       document.getElementById("seek").value = dur ? Math.round((Editor.playhead / dur) * 1000) : 0;
       document.getElementById("project-meta").textContent =
         Editor.project.width + "×" + Editor.project.height + " · " + Editor.project.fps + "fps";
+
+      const resBadge = document.getElementById("canvas-res-badge");
+      if (resBadge) {
+        resBadge.textContent = Editor.project.width + " × " + Editor.project.height;
+      }
+      // Sync aspect ratio button active state
+      const ratio = Editor.project.width / Editor.project.height;
+      document.querySelectorAll("[data-aspect]").forEach((b) => {
+        const a = b.dataset.aspect;
+        let match = false;
+        if (a === "16:9" && Math.abs(ratio - 16/9) < 0.05) match = true;
+        else if (a === "9:16" && Math.abs(ratio - 9/16) < 0.05) match = true;
+        else if (a === "1:1" && Math.abs(ratio - 1) < 0.05) match = true;
+        else if (a === "4:5" && Math.abs(ratio - 4/5) < 0.05) match = true;
+        else if (a === "21:9" && Math.abs(ratio - 21/9) < 0.05) match = true;
+        b.classList.toggle("active", match);
+      });
     }
   };
 
   const Overlay = {
     canvas: null,
     ctx: null,
+    showGrid: false,
     init() {
       this.canvas = document.getElementById("overlay-canvas");
       this.ctx = this.canvas.getContext("2d");
@@ -235,22 +353,174 @@
       const h = this.canvas.height;
       ctx.clearRect(0, 0, w, h);
       const t = Editor.playhead;
+
+      // 1. Render Image clips (Freeze Frames / Photos)
+      Editor.project.clips.forEach((c) => {
+        if (t < c.start || t >= c.start + c.duration) return;
+        const tr = Editor.tracks.find((x) => x.id === c.track);
+        if (tr && tr.hidden) return;
+        if (c.type === "image") this.drawImageClip(c);
+      });
+
+      // 2. Render PiP / Track v2 Video Overlays with Chroma Key
+      this.drawPipClips(ctx, w, h, t);
+
+      // 3. Render Text, Elements, Stickers, FX
       Editor.project.clips.forEach((c) => {
         if (t < c.start || t >= c.start + c.duration) return;
         const tr = Editor.tracks.find((x) => x.id === c.track);
         if (tr && tr.hidden) return;
         if (c.type === "text") this.drawText(c, t);
         if (c.type === "element") this.drawElement(c);
+        if (c.type === "sticker" && global.Stickers) global.Stickers.draw(ctx, w, h, t, c);
         if (c.type === "fx") this.drawFx(c);
       });
+
+      // 4. Subtitles
       Subtitles.draw(ctx, w, h, t);
-      if (Editor.brand.watermark) {
+
+      // 5. Watermark
+      if (Editor.brand && Editor.brand.watermark) {
         ctx.globalAlpha = 0.45;
-        ctx.fillStyle = Editor.brand.primary;
-        ctx.font = "12px Inter";
-        ctx.fillText(Editor.project.name, w - 160, h - 16);
+        ctx.fillStyle = Editor.brand.primary || "#6c8cff";
+        ctx.font = "14px Inter";
+        ctx.fillText(Editor.project.name || "AI Video Editor", w - 160, h - 16);
         ctx.globalAlpha = 1;
       }
+
+      // 6. Direct Manipulation Bounding Box on Canvas
+      if (global.CanvasInteraction) {
+        global.CanvasInteraction.drawSelectionBox(ctx, w, h);
+      }
+
+      // 7. Rule of Thirds & Title/Action Safe Grid
+      if (this.showGrid) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+
+        // Rule of Thirds lines
+        ctx.beginPath();
+        ctx.moveTo(w / 3, 0); ctx.lineTo(w / 3, h);
+        ctx.moveTo((w * 2) / 3, 0); ctx.lineTo((w * 2) / 3, h);
+        ctx.moveTo(0, h / 3); ctx.lineTo(w, h / 3);
+        ctx.moveTo(0, (h * 2) / 3); ctx.lineTo(w, (h * 2) / 3);
+        ctx.stroke();
+
+        // 90% Action Safe Zone
+        ctx.strokeStyle = "rgba(251, 191, 36, 0.35)";
+        ctx.strokeRect(w * 0.05, h * 0.05, w * 0.9, h * 0.9);
+
+        // 80% Title Safe Zone
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.35)";
+        ctx.strokeRect(w * 0.1, h * 0.1, w * 0.8, h * 0.8);
+
+        // Center Crosshair
+        ctx.strokeStyle = "rgba(244, 63, 94, 0.75)";
+        ctx.setLineDash([]);
+        const cx = w / 2, cy = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 14, cy); ctx.lineTo(cx + 14, cy);
+        ctx.moveTo(cx, cy - 14); ctx.lineTo(cx, cy + 14);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    },
+
+    drawImageClip(c) {
+      const m = Editor.media.get(c.sourceId);
+      if (!m || !m.url) return;
+      if (!this._imgCache) this._imgCache = new Map();
+      let img = this._imgCache.get(c.sourceId);
+      if (!img) {
+        img = new Image();
+        img.src = m.url;
+        this._imgCache.set(c.sourceId, img);
+      }
+      if (img.complete && img.naturalWidth) {
+        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+      }
+    },
+
+    drawPipClips(ctx, w, h, t) {
+      const pipClips = Editor.project.clips.filter((c) =>
+        c.type === "video" &&
+        (c.track === "v2" || c.pip) &&
+        t >= c.start &&
+        t < c.start + c.duration &&
+        !Editor.tracks.find((tr) => tr.id === c.track)?.hidden
+      );
+
+      pipClips.forEach((c) => {
+        const m = Editor.media.get(c.sourceId);
+        if (!m || !m.url) return;
+        if (!this._pipVideos) this._pipVideos = new Map();
+        let pipVid = this._pipVideos.get(c.id);
+        if (!pipVid) {
+          pipVid = document.createElement("video");
+          pipVid.src = m.url;
+          pipVid.muted = true;
+          pipVid.playsInline = true;
+          this._pipVideos.set(c.id, pipVid);
+        }
+
+        const local = c.inPoint + (t - c.start) * (c.speed || 1);
+        if (Math.abs(pipVid.currentTime - local) > 0.2) {
+          pipVid.currentTime = local;
+        }
+        if (Editor.playing && pipVid.paused) pipVid.play().catch(() => {});
+        else if (!Editor.playing && !pipVid.paused) pipVid.pause();
+
+        if (pipVid.readyState < 2) return;
+
+        const scale = (c.pipScale || (c.pip ? 35 : 40)) / 100;
+        const pw = w * scale;
+        const ph = pw * ((pipVid.videoHeight / (pipVid.videoWidth || 1)) || (9 / 16));
+        const px = w * ((c.pipX != null ? c.pipX : 80) / 100) - pw / 2;
+        const py = h * ((c.pipY != null ? c.pipY : 75) / 100) - ph / 2;
+
+        ctx.save();
+        ctx.globalCompositeOperation = c.pipBlend || "source-over";
+
+        if (c.chromaKey && c.chromaKey.enabled && global.ChromaKey) {
+          if (!this._ckCanvas) {
+            this._ckCanvas = document.createElement("canvas");
+            this._ckCtx = this._ckCanvas.getContext("2d");
+          }
+          this._ckCanvas.width = Math.min(640, pipVid.videoWidth || 640);
+          this._ckCanvas.height = Math.min(360, pipVid.videoHeight || 360);
+          this._ckCtx.drawImage(pipVid, 0, 0, this._ckCanvas.width, this._ckCanvas.height);
+          const imgData = this._ckCtx.getImageData(0, 0, this._ckCanvas.width, this._ckCanvas.height);
+          global.ChromaKey.processImageData(
+            imgData,
+            c.chromaKey.color || "#00ff00",
+            c.chromaKey.similarity != null ? c.chromaKey.similarity : 45,
+            c.chromaKey.smoothness != null ? c.chromaKey.smoothness : 20,
+            c.chromaKey.spill != null ? c.chromaKey.spill : 30
+          );
+          this._ckCtx.putImageData(imgData, 0, 0);
+
+          ctx.drawImage(this._ckCanvas, px, py, pw, ph);
+        } else {
+          ctx.shadowColor = "rgba(0,0,0,0.5)";
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.roundRect(px, py, pw, ph, 12);
+          ctx.fillStyle = "#000";
+          ctx.fill();
+          ctx.clip();
+          ctx.drawImage(pipVid, px, py, pw, ph);
+
+          ctx.shadowColor = "transparent";
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "rgba(108,140,255,0.85)";
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      });
     },
     drawText(c, t) {
       const ctx = this.ctx;
@@ -676,6 +946,7 @@
         document.getElementById("clip-vol-label").textContent = Math.round(c.volume * 100) + "%";
       }
       document.getElementById("fx-summary").textContent = c && c.effect && c.effect !== "none" ? c.effect : "No effect on selected clip.";
+      if (global.ChromaKey) global.ChromaKey.syncUI();
     }
   };
 

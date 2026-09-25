@@ -382,6 +382,136 @@
         Editor.project.name = e.target.value.trim() || "Untitled Project";
       });
 
+      const aiveInput = document.getElementById("aive-file-input");
+      if (aiveInput) {
+        aiveInput.addEventListener("change", (e) => {
+          if (e.target.files[0]) ProjectIO.importFile(e.target.files[0]);
+          e.target.value = "";
+        });
+      }
+
+      // Chroma Key Controls
+      const ckEnabled = document.getElementById("ck-enabled");
+      if (ckEnabled) {
+        ckEnabled.addEventListener("change", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: false, color: "#00ff00", similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.enabled = e.target.checked;
+          Overlay.draw();
+        });
+      }
+      const ckColor = document.getElementById("ck-color");
+      if (ckColor) {
+        ckColor.addEventListener("input", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: true, color: e.target.value, similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.color = e.target.value;
+          Overlay.draw();
+        });
+      }
+      const ckEye = document.getElementById("ck-eyedropper");
+      if (ckEye) {
+        ckEye.addEventListener("click", () => ChromaKey.pickColorWithEyeDropper());
+      }
+      const ckSim = document.getElementById("ck-similarity");
+      if (ckSim) {
+        ckSim.addEventListener("input", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: true, color: "#00ff00", similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.similarity = Number(e.target.value);
+          const lab = document.getElementById("ck-sim-val");
+          if (lab) lab.textContent = e.target.value + "%";
+          Overlay.draw();
+        });
+      }
+      const ckSmooth = document.getElementById("ck-smoothness");
+      if (ckSmooth) {
+        ckSmooth.addEventListener("input", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: true, color: "#00ff00", similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.smoothness = Number(e.target.value);
+          Overlay.draw();
+        });
+      }
+      const ckSpill = document.getElementById("ck-spill");
+      if (ckSpill) {
+        ckSpill.addEventListener("input", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: true, color: "#00ff00", similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.spill = Number(e.target.value);
+          Overlay.draw();
+        });
+      }
+      document.querySelectorAll("[data-ck-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const c = Editor.selected();
+          if (!c) return;
+          if (!c.chromaKey) c.chromaKey = { enabled: true, color: btn.dataset.ckPreset, similarity: 45, smoothness: 20, spill: 30 };
+          c.chromaKey.color = btn.dataset.ckPreset;
+          c.chromaKey.enabled = true;
+          ChromaKey.syncUI();
+          Overlay.draw();
+        });
+      });
+
+      // PiP Overlay Controls
+      const pipEnabled = document.getElementById("pip-enabled");
+      if (pipEnabled) {
+        pipEnabled.addEventListener("change", (e) => {
+          const c = Editor.selected();
+          if (!c) return;
+          c.pip = e.target.checked;
+          Overlay.draw();
+        });
+      }
+      const pipX = document.getElementById("pip-x");
+      const pipY = document.getElementById("pip-y");
+      const pipScale = document.getElementById("pip-scale");
+      const pipBlend = document.getElementById("pip-blend");
+      if (pipX) pipX.addEventListener("input", (e) => { const c = Editor.selected(); if (c) { c.pipX = Number(e.target.value); Overlay.draw(); } });
+      if (pipY) pipY.addEventListener("input", (e) => { const c = Editor.selected(); if (c) { c.pipY = Number(e.target.value); Overlay.draw(); } });
+      if (pipScale) pipScale.addEventListener("input", (e) => { const c = Editor.selected(); if (c) { c.pipScale = Number(e.target.value); Overlay.draw(); } });
+      if (pipBlend) pipBlend.addEventListener("change", (e) => { const c = Editor.selected(); if (c) { c.pipBlend = e.target.value; Overlay.draw(); } });
+
+      document.querySelectorAll("[data-pip-pos]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const c = Editor.selected();
+          if (!c) return;
+          const pos = btn.dataset.pipPos;
+          const coords = {
+            br: [80, 75],
+            tr: [80, 25],
+            bl: [20, 75],
+            tl: [20, 25],
+            center: [50, 50]
+          }[pos] || [80, 75];
+          c.pip = true;
+          c.pipX = coords[0];
+          c.pipY = coords[1];
+          if (pipEnabled) pipEnabled.checked = true;
+          if (pipX) pipX.value = coords[0];
+          if (pipY) pipY.value = coords[1];
+          Overlay.draw();
+        });
+      });
+
+      // Audio EQ Control
+      const clipEq = document.getElementById("clip-eq");
+      if (clipEq) {
+        clipEq.addEventListener("change", (e) => {
+          const c = Editor.selected();
+          if (c) {
+            c.eq = e.target.value;
+            UI.toast(`Applied EQ preset: ${e.target.value}`);
+          }
+        });
+      }
+
       document.body.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-action]");
         if (!btn) return;
@@ -409,6 +539,11 @@
       const map = {
         "new-project": () => this.confirmNew(),
         "save-project": () => this.saveProject(false),
+        "export-aive": () => ProjectIO.exportFile(),
+        "import-aive": () => document.getElementById("aive-file-input").click(),
+        "open-cmd": () => CommandPalette.toggle(),
+        "freeze-frame": () => FreezeFrame.insertAtPlayhead(3),
+        "ripple-delete": () => Timeline.rippleDeleteSelected(),
         undo: () => History.undo(),
         redo: () => History.redo(),
         "open-help": () => this.openHelp(),

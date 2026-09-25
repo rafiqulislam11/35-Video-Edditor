@@ -63,6 +63,19 @@ Safari often cannot decode MOV/AVI/MKV in `<video>`. MKV is accepted for upload 
 **A — Fully browser-functional**  
 Upload, drag-and-drop, preview, play/pause/stop, frame step, skip, volume, mute, speed, trim + preview range, split/cut/copy/paste/duplicate/reorder, multi-track timeline, magnetic snapping to clip boundaries/playhead, media-to-track drag/drop, zoom, lock/hide/mute tracks, video thumbnails, decoded audio waveform strips, text layers + animations, subtitle editor, SRT import/export, CSS filters & adjustments, overlay effects, transitions, crop overlay, resize canvas, rotate/flip, generated demo music tones, voice-over, **Screen + Webcam + Mic recorder**, automatic recording import to Media/Timeline, undo/redo, IndexedDB save, WebM export with mixed video + timeline audio via MediaRecorder, themes, i18n (EN/BN/AR), templates, brand kit, local silence/scene heuristics, keyboard shortcuts.
 
+**Uncommon & Pro Features (Newly Completed):**
+- 🟩 **Chroma Key (Green Screen / Color Keying)**: Real-time background color removal with eyedropper color sampling, similarity, smoothness, and green spill suppression.
+- 🪟 **Picture-in-Picture (PiP) Multi-Track Overlay**: Concurrently display overlay tracks (v2) on top of background video with corner presets (Bottom-Right, Top-Right, etc.), scale, border, and blend modes (Normal, Screen, Multiply, Overlay).
+- 🖱️ **Interactive Direct Manipulation on Canvas**: Click and drag text, stickers, elements, and PiP videos directly on the monitor stage with interactive transform bounding boxes and resize handles.
+- 🔊 **Procedural SFX Soundboard Studio**: 14 high-fidelity synthesized sound effects (Whoosh, Cinematic Boom, Pop, Camera Shutter, Ding, Error, Laser, Vinyl Scratch, Riser, Applause, Typewriter, Notification, Coin, 8-Bit Jump) generated via Web Audio API offline with one-click timeline insert.
+- 🗣️ **In-Browser AI Text-to-Speech (TTS Voiceover)**: Generate spoken voiceover tracks from text or subtitles using the browser's speech synthesis engine with voice selection, pitch, and speed controls.
+- 🎨 **Animated Social Stickers & Motion Overlays**: Dynamic animated YouTube Subscribe + Bell badge, Like pulse, Shorts bottom progress bar, 3-2-1 countdown overlay, neon arrows, and 2.39:1 / 1.85:1 cinematic letterbox black bars.
+- 📸 **Freeze Frame Generator**: Instantly grab the frame at the playhead and insert a freeze-frame snapshot clip with clean timeline splitting.
+- ⚡ **Ripple Delete**: Delete any selected clip and automatically shift all subsequent clips on the track to close the gap seamlessly.
+- ⚡ **Command Palette (Ctrl+K)**: Instant spotlight search palette to execute any tool, edit, or filter in one keystroke.
+- 💾 **Project Backup & Restore (.aive file)**: Save and restore entire multi-track projects, edits, and metadata across any device.
+- 🚀 **Multi-Format Export Suite**: Export to WebM Video, MP4 (FFmpeg), Animated GIF (for memes and social sharing), and Studio-Quality Audio-only (.wav mixdown).
+
 **B — FFmpeg / WebAssembly**  
 MP4/MOV transcode, robust audio extract, frame-accurate merge/encode, subtitle mux into a container. Config: `window.AIVE_CONFIG.ffmpeg` in `index.html`. Optional local files in `lib/ffmpeg/` (see that folder’s README).
 
@@ -119,6 +132,7 @@ Planned modules: Dashboard, Users, Projects, AI usage, Storage, Exports, Subscri
 | Shortcut | Action |
 |---|---|
 | Space | Play / pause |
+| Ctrl+K | Quick Command Palette |
 | Ctrl+Z | Undo |
 | Ctrl+Y | Redo |
 | Ctrl+S | Save project |
@@ -131,16 +145,17 @@ Planned modules: Dashboard, Users, Projects, AI usage, Storage, Exports, Subscri
 AI-Video-Editor-Pro/
   index.html
   css/style.css
-  js/app.js            Shell, i18n, IndexedDB, history
-  js/video-editor.js   Upload, player, trim, crop, demo
-  js/timeline.js       Tracks, split, drag
-  js/audio.js          Music tones, VO, volume
-  js/screen-recorder.js Screen + webcam + microphone capture and auto-import
-  js/subtitles.js      SRT + overlay
-  js/effects.js        Filters, text, templates, brand
-  js/export.js         MediaRecorder + FFmpeg
-  js/ai.js             Assistant + local analysis
-  lib/ffmpeg/          Optional WASM binaries
+  js/app.js               Shell, i18n, IndexedDB, history
+  js/video-editor.js      Upload, player, trim, crop, demo, PiP
+  js/timeline.js          Tracks, split, ripple delete, drag
+  js/audio.js             Music tones, VO, volume
+  js/screen-recorder.js   Screen + webcam + microphone capture and auto-import
+  js/uncommon-features.js Chroma key, SFX, TTS voiceover, stickers, freeze frame, cmd palette, .aive IO
+  js/subtitles.js         SRT + overlay
+  js/effects.js           Filters, text, templates, brand
+  js/export.js            MediaRecorder + FFmpeg + GIF + Audio mixdown
+  js/ai.js                Assistant + local analysis
+  lib/ffmpeg/             Optional WASM binaries
   assets/
 ```
 

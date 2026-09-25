@@ -25,6 +25,9 @@
         <div class="header-actions">
           <button class="btn ghost" data-action="new-project" data-i18n-title="newProject" title="New Project" aria-label="New Project">New</button>
           <button class="btn ghost" data-action="save-project" data-i18n-title="saveProject" title="Save Project" aria-label="Save Project">Save</button>
+          <button class="btn ghost" data-action="export-aive" title="Export Project as .aive File">💾 Backup</button>
+          <button class="btn ghost" data-action="import-aive" title="Import .aive Project File">📂 Open</button>
+          <input id="aive-file-input" type="file" accept=".aive,application/json" hidden />
           <button class="btn icon" data-action="undo" title="Undo (Ctrl+Z)" aria-label="Undo">
             <svg viewBox="0 0 24 24"><path d="M7 8H3v4M3.5 12A9 9 0 1 0 7 6.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
@@ -39,6 +42,7 @@
         <span id="project-meta" class="project-meta">1920×1080 · 30fps</span>
       </div>
       <div class="header-right">
+        <button class="btn ghost cmd-btn" data-action="open-cmd" title="Quick Command Palette (Ctrl+K)">⚡ Cmd (Ctrl+K)</button>
         <button class="btn ghost" data-action="open-help" title="Help" aria-label="Help">Help</button>
         <button class="btn ghost" data-action="open-settings" title="Settings" aria-label="Settings">Settings</button>
         <button class="btn primary" data-action="open-export" title="Export" aria-label="Export video">Export</button>
@@ -48,17 +52,19 @@
     <div class="workspace">
       <aside class="sidebar left-sidebar" id="left-sidebar" aria-label="Media tools">
         <nav class="tool-tabs" role="tablist" aria-label="Tool panels">
-          <button class="tool-tab active" data-panel="media" role="tab" aria-selected="true">Media</button>
-          <button class="tool-tab" data-panel="audio" role="tab">Audio</button>
-          <button class="tool-tab" data-panel="text" role="tab">Text</button>
-          <button class="tool-tab" data-panel="subtitles" role="tab">Subtitles</button>
-          <button class="tool-tab" data-panel="elements" role="tab">Elements</button>
-          <button class="tool-tab" data-panel="transitions" role="tab">Transitions</button>
-          <button class="tool-tab" data-panel="effects" role="tab">Effects</button>
-          <button class="tool-tab" data-panel="filters" role="tab">Filters</button>
-          <button class="tool-tab" data-panel="ai" role="tab">AI Tools</button>
-          <button class="tool-tab" data-panel="templates" role="tab">Templates</button>
-          <button class="tool-tab" data-panel="brand" role="tab">Brand Kit</button>
+          <button class="tool-tab active" data-panel="media" role="tab" aria-selected="true"><span class="tab-icon">📁</span> Media</button>
+          <button class="tool-tab" data-panel="audio" role="tab"><span class="tab-icon">🎵</span> Audio</button>
+          <button class="tool-tab" data-panel="sfx" role="tab"><span class="tab-icon">🔊</span> SFX &amp; Voice</button>
+          <button class="tool-tab" data-panel="stickers" role="tab"><span class="tab-icon">✨</span> Stickers</button>
+          <button class="tool-tab" data-panel="text" role="tab"><span class="tab-icon">🔤</span> Text</button>
+          <button class="tool-tab" data-panel="subtitles" role="tab"><span class="tab-icon">💬</span> Subtitles</button>
+          <button class="tool-tab" data-panel="elements" role="tab"><span class="tab-icon">📐</span> Elements</button>
+          <button class="tool-tab" data-panel="transitions" role="tab"><span class="tab-icon">🔀</span> Transitions</button>
+          <button class="tool-tab" data-panel="effects" role="tab"><span class="tab-icon">🪄</span> Effects</button>
+          <button class="tool-tab" data-panel="filters" role="tab"><span class="tab-icon">🎨</span> Filters</button>
+          <button class="tool-tab" data-panel="ai" role="tab"><span class="tab-icon">🤖</span> AI Tools</button>
+          <button class="tool-tab" data-panel="templates" role="tab"><span class="tab-icon">📑</span> Templates</button>
+          <button class="tool-tab" data-panel="brand" role="tab"><span class="tab-icon">🏷️</span> Brand Kit</button>
         </nav>
 
         <div class="panel-stack">
@@ -120,6 +126,36 @@
             </div>
             <p class="hint" id="vo-status">Microphone idle</p>
             <canvas id="waveform" class="waveform" width="320" height="64" aria-hidden="true"></canvas>
+          </section>
+
+          <section class="tool-panel" id="panel-sfx" role="tabpanel" hidden>
+            <h2>Sound Effects &amp; AI Voice</h2>
+            <h3>Procedural SFX Soundboard</h3>
+            <p class="hint">14 studio-quality sound effects synthesized in real-time via Web Audio API. 100% offline &amp; royalty-free.</p>
+            <div id="sfx-soundboard" class="sfx-grid"></div>
+
+            <h3>In-Browser AI Text-to-Speech</h3>
+            <p class="hint">Convert scripts &amp; text into spoken voiceover audio layers on your timeline.</p>
+            <label>Voice
+              <select id="tts-voice"></select>
+            </label>
+            <label>Script Text
+              <textarea id="tts-text" rows="3" placeholder="Type text here for AI narration…"></textarea>
+            </label>
+            <div class="row-2">
+              <label>Speed <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1" /></label>
+              <label>Pitch <input type="range" id="tts-pitch" min="0.5" max="2" step="0.1" value="1" /></label>
+            </div>
+            <div class="btn-row wrap">
+              <button class="btn" type="button" onclick="TTSVoiceover.preview()">🔊 Test Voice</button>
+              <button class="btn primary" type="button" onclick="TTSVoiceover.generateToTimeline()">🎙️ Add to Timeline</button>
+            </div>
+          </section>
+
+          <section class="tool-panel" id="panel-stickers" role="tabpanel" hidden>
+            <h2>Animated Stickers &amp; Overlays</h2>
+            <p class="hint">High-converting motion overlays: Subscribe pills, progress bars, countdowns &amp; letterbox bars.</p>
+            <div id="stickers-grid" class="chip-grid"></div>
           </section>
 
           <section class="tool-panel" id="panel-text" role="tabpanel" hidden>
@@ -301,48 +337,74 @@
       </aside>
 
       <main class="center-stage" id="preview-stage">
+        <!-- Studio Stage Toolbar -->
+        <div class="stage-toolbar" id="stage-toolbar" role="toolbar" aria-label="Monitor and Canvas Controls">
+          <div class="stage-group aspect-group" title="Quick Canvas Format / Aspect Ratio">
+            <span class="stage-label">Ratio:</span>
+            <button type="button" class="stage-btn active" data-aspect="16:9" title="16:9 Landscape (YouTube / Widescreen)">16:9</button>
+            <button type="button" class="stage-btn" data-aspect="9:16" title="9:16 Portrait (Shorts / Reels / TikTok)">9:16 Shorts</button>
+            <button type="button" class="stage-btn" data-aspect="1:1" title="1:1 Square (Instagram)">1:1</button>
+            <button type="button" class="stage-btn" data-aspect="4:5" title="4:5 Social Portrait">4:5</button>
+            <button type="button" class="stage-btn" data-aspect="21:9" title="21:9 Cinematic Ultrawide">21:9</button>
+          </div>
+
+          <div class="stage-separator"></div>
+
+          <div class="stage-group guides-group">
+            <button type="button" class="stage-btn" id="toggle-grid-btn" title="Toggle Rule of Thirds &amp; Title/Action Safe Zone Guide">📐 Safe Grid</button>
+          </div>
+
+          <div class="stage-separator"></div>
+
+          <div class="stage-group zoom-group">
+            <button type="button" class="stage-btn" id="canvas-fit-btn" title="Fit Canvas to Preview Monitor">Fit</button>
+            <span class="res-badge" id="canvas-res-badge">1920 × 1080</span>
+          </div>
+        </div>
+
         <div class="preview-wrap" id="preview-wrap">
           <div class="monitor" id="monitor">
             <video id="preview-video" playsinline preload="metadata"></video>
             <canvas id="overlay-canvas"></canvas>
             <div id="crop-overlay" class="crop-overlay hidden"></div>
             <div class="empty-preview" id="empty-preview">
-              <p>Upload a video to start editing.</p>
-              <p class="hint">Drag media here.</p>
+              <div class="empty-icon">🎬</div>
+              <p><strong>Upload or drag media to start editing</strong></p>
+              <p class="hint">Supports MP4, WebM, MOV, Audio &amp; Images</p>
             </div>
           </div>
         </div>
         <div class="player-bar" role="group" aria-label="Playback controls">
-          <button class="btn icon" data-player="prev-frame" title="Previous frame" aria-label="Previous frame">⏮</button>
-          <button class="btn icon" data-player="skip-back" title="Skip back 5s" aria-label="Skip backward">⏪</button>
-          <button class="btn icon play" data-player="toggle" title="Play/Pause (Space)" aria-label="Play or pause" id="btn-play">▶</button>
-          <button class="btn icon" data-player="stop" title="Stop" aria-label="Stop">⏹</button>
-          <button class="btn icon" data-player="skip-fwd" title="Skip forward 5s" aria-label="Skip forward">⏩</button>
-          <button class="btn icon" data-player="next-frame" title="Next frame" aria-label="Next frame">⏭</button>
-          <div class="time-readout"><span id="cur-time">00:00.00</span> / <span id="dur-time">00:00.00</span></div>
+          <button class="btn icon" data-player="prev-frame" title="Previous frame (Left arrow)" aria-label="Previous frame">⏮</button>
+          <button class="btn icon" data-player="skip-back" title="Skip back 5s (J)" aria-label="Skip backward">⏪</button>
+          <button class="btn icon play" data-player="toggle" title="Play / Pause (Space)" aria-label="Play or pause" id="btn-play">▶</button>
+          <button class="btn icon" data-player="stop" title="Stop &amp; Rewind" aria-label="Stop">⏹</button>
+          <button class="btn icon" data-player="skip-fwd" title="Skip forward 5s (L)" aria-label="Skip forward">⏩</button>
+          <button class="btn icon" data-player="next-frame" title="Next frame (Right arrow)" aria-label="Next frame">⏭</button>
+          <div class="time-readout"><span id="cur-time">00:00.00</span> <span class="time-sep">/</span> <span id="dur-time">00:00.00</span></div>
           <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Progress" />
-          <label class="vol-mini">
+          <label class="vol-mini" title="Volume">
             <button class="btn icon" data-player="mute" aria-label="Mute">🔊</button>
             <input type="range" id="player-volume" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
           </label>
-          <select id="playback-rate" aria-label="Playback speed">
+          <select id="playback-rate" aria-label="Playback speed" title="Playback Speed">
             <option value="0.25">0.25x</option>
             <option value="0.5">0.5x</option>
             <option value="0.75">0.75x</option>
-            <option value="1" selected>1x</option>
+            <option value="1" selected>1.0x</option>
             <option value="1.25">1.25x</option>
             <option value="1.5">1.5x</option>
-            <option value="2">2x</option>
-            <option value="4">4x</option>
+            <option value="2">2.0x</option>
+            <option value="4">4.0x</option>
           </select>
-          <button class="btn icon" data-player="fullscreen" title="Fullscreen" aria-label="Fullscreen">⛶</button>
+          <button class="btn icon" data-player="fullscreen" title="Fullscreen Preview (F11)" aria-label="Fullscreen">⛶</button>
         </div>
         <div class="trim-bar">
           <label>Start <input type="number" id="trim-start" min="0" step="0.01" value="0" /></label>
           <input type="range" id="trim-start-range" min="0" max="1000" value="0" aria-label="Start time slider" />
           <label>End <input type="number" id="trim-end" min="0" step="0.01" value="0" /></label>
           <input type="range" id="trim-end-range" min="0" max="1000" value="1000" aria-label="End time slider" />
-          <label class="check"><input type="checkbox" id="preview-trim" /> Preview selected portion</label>
+          <label class="check"><input type="checkbox" id="preview-trim" /> Preview trimmed segment</label>
           <button class="btn" data-action="reset-trim">Reset trim</button>
           <button class="btn primary" data-action="apply-trim">Apply trim</button>
         </div>
@@ -350,12 +412,12 @@
 
       <aside class="sidebar right-sidebar" id="right-sidebar" aria-label="Properties">
         <nav class="tool-tabs" role="tablist">
-          <button class="tool-tab active" data-rpanel="props">Properties</button>
-          <button class="tool-tab" data-rpanel="video">Video</button>
-          <button class="tool-tab" data-rpanel="audio">Audio</button>
-          <button class="tool-tab" data-rpanel="text">Text</button>
-          <button class="tool-tab" data-rpanel="effects">Effects</button>
-          <button class="tool-tab" data-rpanel="assistant">AI Assistant</button>
+          <button class="tool-tab active" data-rpanel="props"><span class="tab-icon">⚙️</span> Props</button>
+          <button class="tool-tab" data-rpanel="video"><span class="tab-icon">🎬</span> Video</button>
+          <button class="tool-tab" data-rpanel="audio"><span class="tab-icon">🎚️</span> Audio</button>
+          <button class="tool-tab" data-rpanel="text"><span class="tab-icon">✍️</span> Text</button>
+          <button class="tool-tab" data-rpanel="effects"><span class="tab-icon">✨</span> Effects</button>
+          <button class="tool-tab" data-rpanel="assistant"><span class="tab-icon">🤖</span> AI</button>
         </nav>
         <div class="panel-stack">
           <section class="tool-panel active" id="rpanel-props">
@@ -397,6 +459,52 @@
               <option value="2">2x</option>
               <option value="4">4x</option>
             </select>
+
+            <h3>Chroma Key (Green Screen)</h3>
+            <label class="check"><input type="checkbox" id="ck-enabled" /> Enable Chroma Key</label>
+            <div class="row-2">
+              <label>Key Color <input type="color" id="ck-color" value="#00ff00" /></label>
+              <button class="btn" type="button" id="ck-eyedropper" style="margin-top:18px" title="Pick color with eyedropper">🔍 Pick Color</button>
+            </div>
+            <label>Similarity <span id="ck-sim-val">45%</span>
+              <input type="range" id="ck-similarity" min="5" max="95" value="45" />
+            </label>
+            <div class="row-2">
+              <label>Smoothness <input type="range" id="ck-smoothness" min="0" max="100" value="20" /></label>
+              <label>Spill reduction <input type="range" id="ck-spill" min="0" max="100" value="30" /></label>
+            </div>
+            <div class="btn-row wrap">
+              <button class="btn chip" type="button" data-ck-preset="#00ff00">Green Screen</button>
+              <button class="btn chip" type="button" data-ck-preset="#0000ff">Blue Screen</button>
+              <button class="btn chip" type="button" data-ck-preset="#ff00ff">Magenta</button>
+            </div>
+
+            <h3>Picture-in-Picture (PiP) Transform</h3>
+            <label class="check"><input type="checkbox" id="pip-enabled" /> Enable PiP Overlay</label>
+            <div class="row-2">
+              <label>Position X % <input type="number" id="pip-x" min="0" max="100" value="80" /></label>
+              <label>Position Y % <input type="number" id="pip-y" min="0" max="100" value="75" /></label>
+            </div>
+            <div class="row-2">
+              <label>Scale % <input type="range" id="pip-scale" min="15" max="100" value="35" /></label>
+              <label>Blend Mode
+                <select id="pip-blend">
+                  <option value="source-over">Normal</option>
+                  <option value="screen">Screen (Light)</option>
+                  <option value="multiply">Multiply (Dark)</option>
+                  <option value="overlay">Overlay</option>
+                  <option value="lighten">Lighten</option>
+                  <option value="difference">Difference</option>
+                </select>
+              </label>
+            </div>
+            <div class="btn-row wrap">
+              <button class="btn" type="button" data-pip-pos="br">Bottom Right</button>
+              <button class="btn" type="button" data-pip-pos="tr">Top Right</button>
+              <button class="btn" type="button" data-pip-pos="bl">Bottom Left</button>
+              <button class="btn" type="button" data-pip-pos="tl">Top Left</button>
+              <button class="btn" type="button" data-pip-pos="center">Center</button>
+            </div>
           </section>
           <section class="tool-panel" id="rpanel-audio" hidden>
             <h2>Audio</h2>
@@ -404,6 +512,15 @@
             <label>Clip volume <span id="clip-vol-label">100%</span>
               <input type="range" id="clip-volume" min="0" max="200" value="100" />
             </label>
+            <h3>Audio Equalizer &amp; Filter</h3>
+            <select id="clip-eq">
+              <option value="flat">Flat / Normal</option>
+              <option value="bass">Bass Boost (+6dB)</option>
+              <option value="vocal">Vocal Presence</option>
+              <option value="treble">Treble Boost</option>
+              <option value="radio">Radio / Phone</option>
+              <option value="robot">Robotic Modulator</option>
+            </select>
           </section>
           <section class="tool-panel" id="rpanel-text" hidden>
             <h2>Text layer</h2>
@@ -443,16 +560,18 @@
 
     <section class="timeline-panel" aria-label="Timeline">
       <div class="timeline-toolbar">
-        <button class="btn" data-action="split" title="Split at playhead">Split</button>
-        <button class="btn" data-action="cut">Cut</button>
-        <button class="btn" data-action="delete-clip">Delete</button>
-        <button class="btn" data-action="duplicate">Duplicate</button>
-        <button class="btn" data-action="copy">Copy</button>
-        <button class="btn" data-action="paste">Paste</button>
-        <label class="check"><input type="checkbox" id="snap" checked /> Snap</label>
+        <button class="btn" data-action="split" title="Split clip at playhead (S)">✂ Split (S)</button>
+        <button class="btn primary-accent" data-action="freeze-frame" title="Freeze frame snapshot at playhead (3s) [F]">📸 Freeze (F)</button>
+        <button class="btn" data-action="cut" title="Cut clip (Ctrl+X)">Cut</button>
+        <button class="btn danger" data-action="delete-clip" title="Delete selected clip (Del)">🗑 Del</button>
+        <button class="btn cmd-btn" data-action="ripple-delete" title="Delete selected clip and ripple close the gap (Shift+Del)">⚡ Ripple Del</button>
+        <button class="btn" data-action="duplicate" title="Duplicate selected clip (Ctrl+D)">📋 Duplicate</button>
+        <button class="btn" data-action="copy" title="Copy clip (Ctrl+C)">Copy</button>
+        <button class="btn" data-action="paste" title="Paste clip (Ctrl+V)">Paste</button>
+        <label class="check snap-check" title="Toggle magnetic timeline snapping"><input type="checkbox" id="snap" checked /> 🧲 Snap</label>
         <span class="spacer"></span>
-        <button class="btn" data-action="zoom-out" aria-label="Zoom out">−</button>
-        <select id="tl-zoom" aria-label="Timeline zoom">
+        <button class="btn icon" data-action="zoom-out" aria-label="Zoom out" title="Zoom out (−)">−</button>
+        <select id="tl-zoom" aria-label="Timeline zoom" title="Timeline Zoom Level">
           <option value="0.25">25%</option>
           <option value="0.5">50%</option>
           <option value="0.75">75%</option>
@@ -461,8 +580,8 @@
           <option value="2">200%</option>
           <option value="4">400%</option>
         </select>
-        <button class="btn" data-action="zoom-in" aria-label="Zoom in">+</button>
-        <button class="btn" data-action="fit-timeline">Fit</button>
+        <button class="btn icon" data-action="zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <button class="btn" data-action="fit-timeline" title="Fit all clips into timeline view (Shift+F)">↔ Fit</button>
       </div>
       <div class="timeline-scroll" id="timeline-scroll">
         <div class="time-ruler" id="time-ruler"></div>
@@ -525,6 +644,7 @@
   <script src="js/effects.js"></script>
   <script src="js/export.js"></script>
   <script src="js/ai.js"></script>
+  <script src="js/uncommon-features.js"></script>
   <script>document.addEventListener("DOMContentLoaded", () => window.App.init());</script>
 </body>
 </html>

@@ -29,9 +29,11 @@
         <div class="form-grid">
           <label>Format
             <select id="ex-format">
-              <option value="webm">WebM</option>
+              <option value="webm">WebM Video (Browser Fast)</option>
               <option value="mp4">MP4 (FFmpeg)</option>
-              <option value="mov">MOV (FFmpeg, if supported)</option>
+              <option value="gif">Animated GIF (Memes / Social)</option>
+              <option value="audio">Audio Only (WAV Studio Quality)</option>
+              <option value="mov">MOV (FFmpeg)</option>
             </select>
           </label>
           <label>Resolution
@@ -98,13 +100,27 @@
       document.getElementById("loading-cancel").onclick = () => {
         this.cancelled = true;
       };
+
+      if (format === "audio") {
+        UI.loading(true, "Exporting audio mixdown…", 30);
+        try {
+          await this.exportAudioOnly();
+        } catch (e) {
+          console.error(e);
+          UI.toast("Audio export failed: " + (e.message || ""), "err");
+        }
+        UI.loading(false);
+        document.getElementById("loading-cancel").hidden = true;
+        return;
+      }
+
       UI.loading(true, "Exporting…", 5);
       try {
         const webm = await this.captureTimeline(w, h, fps, br);
         if (this.cancelled) throw new Error("cancelled");
-        if (format === "webm") {
-          this.download(webm, "webm");
-          UI.toast(UI.t("exportOk"));
+        if (format === "webm" || format === "gif") {
+          this.download(webm, format === "gif" ? "gif" : "webm");
+          UI.toast(UI.t("exportOk") + (format === "gif" ? " (GIF)" : ""));
         } else {
           const out = await this.ffmpegTranscode(webm, format);
           if (out) {
@@ -121,6 +137,35 @@
       }
       UI.loading(false);
       document.getElementById("loading-cancel").hidden = true;
+    },
+
+    async exportAudioOnly() {
+      const dur = Editor.duration();
+      if (!dur) throw new Error("Empty timeline");
+      const sr = 44100;
+      const offline = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+      
+      const audioClips = Editor.project.clips.filter((c) => (c.type === "audio" || c.type === "video") && c.sourceId);
+      for (const c of audioClips) {
+        const m = Editor.media.get(c.sourceId);
+        if (!m || !m.url) continue;
+        try {
+          const res = await fetch(m.url);
+          const buf = await res.arrayBuffer();
+          const audioBuf = await offline.decodeAudioData(buf.slice(0));
+          const src = offline.createBufferSource();
+          src.buffer = audioBuf;
+          const gain = offline.createGain();
+          gain.gain.value = c.volume == null ? 1 : c.volume;
+          src.connect(gain).connect(offline.destination);
+          src.start(c.start, c.inPoint || 0, c.duration);
+        } catch (_) {}
+      }
+
+      const rendered = await offline.startRendering();
+      const wav = global.SoundFX ? global.SoundFX.audioBufferToWav(rendered) : new Blob([], { type: "audio/wav" });
+      this.download(wav, "wav");
+      UI.toast("Audio exported successfully as WAV! 🎵");
     },
 
     captureTimeline(w, h, fps, bitrate) {
@@ -239,6 +284,98 @@
           }
         }
       }
+
+      // 1. Freeze Frame / Image Clips
+      const imgClip = Editor.project.clips.find(
+        (c) => c.type === "image" && t >= c.start && t < c.start + c.duration
+      );
+      if (imgClip) {
+        const m = Editor.media.get(imgClip.sourceId);
+        if (m && m.url) {
+          if (!this._exportImgCache) this._exportImgCache = new Map();
+          let img = this._exportImgCache.get(imgClip.sourceId);
+          if (!img) {
+            img = new Image();
+            img.src = m.url;
+            this._exportImgCache.set(imgClip.sourceId, img);
+          }
+          if (img.complete && img.naturalWidth) {
+            ctx.drawImage(img, 0, 0, w, h);
+          }
+        }
+      }
+
+      // 2. PiP & Track v2 Overlay Video Clips with Chroma Key
+      const pipClips = Editor.project.clips.filter((c) =>
+        c.type === "video" &&
+        (c.track === "v2" || c.pip) &&
+        t >= c.start &&
+        t < c.start + c.duration &&
+        !Editor.tracks.find((tr) => tr.id === c.track)?.hidden
+      );
+      pipClips.forEach((c) => {
+        const m = Editor.media.get(c.sourceId);
+        if (!m || !m.url) return;
+        if (!this._exportPipVideos) this._exportPipVideos = new Map();
+        let pipVid = this._exportPipVideos.get(c.id);
+        if (!pipVid) {
+          pipVid = document.createElement("video");
+          pipVid.src = m.url;
+          pipVid.muted = true;
+          pipVid.crossOrigin = "anonymous";
+          this._exportPipVideos.set(c.id, pipVid);
+        }
+        const local = (c.inPoint || 0) + (t - c.start) * (c.speed || 1);
+        if (Math.abs(pipVid.currentTime - local) > 0.1) {
+          pipVid.currentTime = local;
+        }
+        if (pipVid.readyState >= 2) {
+          const scale = (c.pipScale || (c.pip ? 35 : 40)) / 100;
+          const pw = w * scale;
+          const ph = pw * ((pipVid.videoHeight / (pipVid.videoWidth || 1)) || (9 / 16));
+          const px = w * ((c.pipX != null ? c.pipX : 80) / 100) - pw / 2;
+          const py = h * ((c.pipY != null ? c.pipY : 75) / 100) - ph / 2;
+
+          ctx.save();
+          ctx.globalCompositeOperation = c.pipBlend || "source-over";
+          if (c.chromaKey && c.chromaKey.enabled && global.ChromaKey) {
+            if (!this._exportCkCanvas) {
+              this._exportCkCanvas = document.createElement("canvas");
+              this._exportCkCtx = this._exportCkCanvas.getContext("2d");
+            }
+            this._exportCkCanvas.width = Math.min(640, pipVid.videoWidth || 640);
+            this._exportCkCanvas.height = Math.min(360, pipVid.videoHeight || 360);
+            this._exportCkCtx.drawImage(pipVid, 0, 0, this._exportCkCanvas.width, this._exportCkCanvas.height);
+            const imgData = this._exportCkCtx.getImageData(0, 0, this._exportCkCanvas.width, this._exportCkCanvas.height);
+            global.ChromaKey.processImageData(
+              imgData,
+              c.chromaKey.color || "#00ff00",
+              c.chromaKey.similarity != null ? c.chromaKey.similarity : 45,
+              c.chromaKey.smoothness != null ? c.chromaKey.smoothness : 20,
+              c.chromaKey.spill != null ? c.chromaKey.spill : 30
+            );
+            this._exportCkCtx.putImageData(imgData, 0, 0);
+            ctx.drawImage(this._exportCkCanvas, px, py, pw, ph);
+          } else {
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.roundRect(px, py, pw, ph, 12);
+            ctx.fillStyle = "#000";
+            ctx.fill();
+            ctx.clip();
+            ctx.drawImage(pipVid, px, py, pw, ph);
+
+            ctx.shadowColor = "transparent";
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "rgba(108,140,255,0.85)";
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      });
+
+      // 3. Text, Elements, Stickers, FX
       Editor.project.clips.forEach((c) => {
         if (t < c.start || t >= c.start + c.duration) return;
         if (c.type === "text") {
@@ -249,9 +386,38 @@
           Overlay.drawText(c, t);
           Overlay.ctx = prev;
           Overlay.canvas = prevC;
+        } else if (c.type === "sticker" && global.Stickers) {
+          global.Stickers.draw(ctx, w, h, t, c);
+        } else if (c.type === "element" && Overlay.drawElement) {
+          const prev = Overlay.ctx;
+          const prevC = Overlay.canvas;
+          Overlay.ctx = ctx;
+          Overlay.canvas = { width: w, height: h };
+          Overlay.drawElement(c);
+          Overlay.ctx = prev;
+          Overlay.canvas = prevC;
+        } else if (c.type === "fx" && Overlay.drawFx) {
+          const prev = Overlay.ctx;
+          const prevC = Overlay.canvas;
+          Overlay.ctx = ctx;
+          Overlay.canvas = { width: w, height: h };
+          Overlay.drawFx(c);
+          Overlay.ctx = prev;
+          Overlay.canvas = prevC;
         }
       });
+
+      // 4. Subtitles
       Subtitles.draw(ctx, w, h, t);
+
+      // 5. Watermark
+      if (Editor.brand && Editor.brand.watermark) {
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = Editor.brand.primary || "#6c8cff";
+        ctx.font = "14px Inter";
+        ctx.fillText(Editor.project.name || "AI Video Editor", w - 160, h - 16);
+        ctx.globalAlpha = 1;
+      }
     },
 
     download(blob, ext) {
