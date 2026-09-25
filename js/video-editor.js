@@ -1105,6 +1105,20 @@
       meta.innerHTML = `<strong title="${i.name}">${isImg ? "🖼️ " : "🎬 "}${i.name}</strong>
         ${formatTime(i.duration)} · ${i.width}×${i.height}<br/>
         ${formatBytes(i.size)} · ${isImg ? "PHOTO" : (i.type.split("/")[1] || "video").toUpperCase()}`;
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "btn primary mini media-quick-add";
+      addBtn.innerHTML = "➕ টাইমলাইনে যোগ";
+      addBtn.title = "প্লে-হেডে এই ক্লিপটি যোগ করুন (Add to Timeline)";
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (global.EasyUX && global.EasyUX.insertMediaToTimeline) {
+          global.EasyUX.insertMediaToTimeline(rec);
+        }
+      });
+      meta.appendChild(addBtn);
+
       card.append(thumb, meta);
       card.addEventListener("click", () => {
         Player.load(rec);
@@ -1247,6 +1261,25 @@
       document.getElementById("fx-summary").textContent = c && c.effect && c.effect !== "none" ? c.effect : "No effect on selected clip.";
       if (global.ChromaKey) global.ChromaKey.syncUI();
       if (global.TextStudio) global.TextStudio.syncUIFromClip(c);
+
+      // Auto-switch Inspector tab according to clip type for seamless, effortless UX
+      if (c && global.UI && global.UI.switchRightTab) {
+        if (c.type === "text" || c.type === "sub") {
+          global.UI.switchRightTab("text");
+        } else if (c.type === "video" || c.type === "image") {
+          global.UI.switchRightTab("video");
+        } else if (c.type === "audio") {
+          global.UI.switchRightTab("audio");
+        } else if (c.type === "fx" || c.type === "sticker") {
+          global.UI.switchRightTab("effects");
+        }
+      } else if (!c && global.UI && global.UI.switchRightTab) {
+        global.UI.switchRightTab("props");
+      }
+
+      if (global.EasyUX && global.EasyUX.updateContextBar) {
+        global.EasyUX.updateContextBar(c);
+      }
     }
   };
 

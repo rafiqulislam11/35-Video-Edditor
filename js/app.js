@@ -208,6 +208,32 @@
       });
       if (window.Overlay) window.Overlay.resize();
     },
+    switchRightTab(tabName) {
+      const tab = document.querySelector(`.right-sidebar .tool-tab[data-rpanel="${tabName}"]`);
+      if (!tab) return;
+      document.querySelectorAll(".right-sidebar .tool-tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll(".right-sidebar .tool-panel").forEach((p) => {
+        const match = p.id === "rpanel-" + tabName;
+        p.classList.toggle("active", match);
+        p.hidden = !match;
+      });
+    },
+    switchLeftTab(tabName) {
+      const tab = document.querySelector(`.left-sidebar .tool-tab[data-panel="${tabName}"]`);
+      if (!tab) return;
+      document.querySelectorAll(".left-sidebar .tool-tab").forEach((t) => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+      document.querySelectorAll(".left-sidebar .tool-panel").forEach((p) => {
+        const match = p.id === "panel-" + tabName;
+        p.classList.toggle("active", match);
+        p.hidden = !match;
+      });
+    },
     loading(show, text, progress) {
       const veil = document.getElementById("loading-veil");
       veil.hidden = !show;

@@ -52,6 +52,7 @@
           <option value="float-right">⛶ Floating Inspector (ভাসমান)</option>
         </select>
         <button class="btn ghost cmd-btn" data-action="open-cmd" title="Quick Command Palette (Ctrl+K)">⚡ Cmd (Ctrl+K)</button>
+        <button class="btn primary-accent" type="button" onclick="EasyUX.openGuide()" title="ভিডিও এডিটিং সহজ গাইড (Quick Beginner Guide)" style="font-weight: 700; padding: 4px 10px; font-size: 11px;">✨ সহজ গাইড</button>
         <button class="btn ghost" data-action="open-help" title="Help" aria-label="Help">Help</button>
         <button class="btn ghost" data-action="open-settings" title="Settings" aria-label="Settings">Settings</button>
         <button class="btn primary" data-action="open-export" title="Export" aria-label="Export video">Export</button>
@@ -261,6 +262,13 @@
               <label class="check" style="margin-left:auto; font-size:11px; color:var(--muted);" title="টাইপ বা পেস্ট করার সময় স্বয়ংক্রিয়ভাবে বিজয় সনাক্ত করে রূপান্তর করবে">
                 <input type="checkbox" id="bijoy-auto-detect" checked /> অটো ডিটেক্ট
               </label>
+            </div>
+
+            <!-- 1-Click Quick Add Text Presets -->
+            <div class="quick-text-chips" style="display:flex; gap:6px; margin: 10px 0 10px 0; overflow-x:auto;">
+              <button type="button" class="btn primary-accent" onclick="EasyUX.quickAddText('title')" style="flex:1; white-space:nowrap; font-size:11px; font-weight:700;">➕ টাইটেল যোগ</button>
+              <button type="button" class="btn" onclick="EasyUX.quickAddText('bangla')" style="flex:1; white-space:nowrap; font-size:11px; font-weight:600;">🇧🇩 বাংলা টাইটেল</button>
+              <button type="button" class="btn" onclick="EasyUX.quickAddText('lower-third')" style="flex:1; white-space:nowrap; font-size:11px; font-weight:600;">📌 ক্যাপশন / লোয়ার থার্ড</button>
             </div>
 
             <label>Content (Multiline supported)
@@ -836,6 +844,22 @@
         <button class="btn icon" data-action="zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
         <button class="btn" data-action="fit-timeline" title="Fit all clips into timeline view (Shift+F)">↔ Fit</button>
       </div>
+
+      <!-- Contextual Easy UX Action Bar -->
+      <div class="timeline-quick-bar" id="timeline-quick-bar">
+        <div class="quick-status" id="quick-status">
+          <span class="quick-pill" id="quick-pill">💡 কুইক স্টার্ট</span>
+          <span class="quick-msg" id="quick-msg">টাইমলাইনে ক্লিপে ক্লিক করুন অথবা সরাসরি নিচের একশন বেছে নিন:</span>
+        </div>
+        <div class="quick-buttons" id="quick-buttons">
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('media')" title="ভিডিও বা ছবি আপলোড করুন">📁 মিডিয়া</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('text')" title="১-ক্লিকে টেক্সট বা টাইটেল যোগ করুন">🔤 টেক্সট</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('photo-video')" title="ছবি দিয়ে ভিডিও বানান">📸 ফটো ভিডিও</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('audio')" title="ব্যাকগ্রাউন্ড মিউজিক বা সাউন্ড দিন">🎵 অডিও</button>
+          <button type="button" class="quick-btn highlight" onclick="EasyUX.openGuide()" title="ভিডিও এডিটিং সহজ গাইড দেখুন">✨ সহজ গাইড</button>
+        </div>
+      </div>
+
       <div class="timeline-scroll" id="timeline-scroll">
         <div class="time-ruler" id="time-ruler"></div>
         <div id="tracks" class="tracks"></div>

@@ -1051,6 +1051,9 @@
       { id: "layout_theater", title: "Theater Mode (থিয়েটার মোড / Big Canvas)", category: "Workspace", icon: "🎬", action: () => WorkspaceLayout.applyPreset("theater") },
       { id: "layout_timeline", title: "Timeline Focus (টাইমলাইন মোড)", category: "Workspace", icon: "⏱️", action: () => WorkspaceLayout.applyPreset("timeline") },
       { id: "layout_media", title: "Media Library Focus (মিডিয়া ফোকাস)", category: "Workspace", icon: "📁", action: () => WorkspaceLayout.applyPreset("media") },
+      { id: "easy_guide", title: "ভিডিও এডিটিং সহজ গাইড (Easy Beginner Guide)", category: "Help", icon: "✨", action: () => EasyUX.openGuide() },
+      { id: "quick_title", title: "Quick Add Title (১-ক্লিকে টাইটেল যোগ)", category: "Text", icon: "🔤", action: () => EasyUX.quickAddText("title") },
+      { id: "quick_bangla", title: "Quick Add Bangla Title (বাংলা টাইটেল)", category: "Text", icon: "🇧🇩", action: () => EasyUX.quickAddText("bangla") },
       { id: "layout_swap", title: "Swap Sidebars (ডান ও বাম প্যানেল অদলবদল)", category: "Workspace", icon: "⇄", action: () => WorkspaceLayout.swapSidebars() },
       { id: "layout_float_left", title: "Float Tools Panel (ভাসমান বাম টুলস প্যানেল)", category: "Workspace", icon: "⛶", action: () => WorkspaceLayout.toggleFloat("left-sidebar") },
       { id: "layout_float_right", title: "Float Inspector Panel (ভাসমান ডান ইন্সপেক্টর)", category: "Workspace", icon: "⛶", action: () => WorkspaceLayout.toggleFloat("right-sidebar") }
@@ -2369,6 +2372,281 @@
   };
 
   // ==========================================
+  // EASY UX & WORKFLOW ACCELERATOR ENGINE
+  // ==========================================
+  const EasyUX = {
+    init() {
+      this.updateContextBar(null);
+      this.setupDirectManipulationClue();
+      this.updatePhotoCountBadge();
+    },
+
+    updateContextBar(c) {
+      const bar = document.getElementById("timeline-quick-bar");
+      if (!bar) return;
+      const pill = document.getElementById("quick-pill");
+      const msg = document.getElementById("quick-msg");
+      const btns = document.getElementById("quick-buttons");
+      if (!pill || !msg || !btns) return;
+
+      if (c) {
+        pill.className = "quick-pill selected";
+        const icon = c.type === "video" ? "🎬" : c.type === "image" ? "🖼️" : c.type === "text" ? "🔤" : c.type === "audio" ? "🎵" : "✨";
+        const dur = (c.duration || 0).toFixed(1) + "s";
+        pill.textContent = `${icon} ${c.type.toUpperCase()} · ${dur}`;
+        msg.textContent = "সিলেক্টেড ক্লিপ একশন:";
+
+        let html = `
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('split')" title="প্লে-হেডে কাটুন (S)">✂ Split (ভাগ)</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('freeze')" title="৩ সেকেন্ডের স্টিল ছবি নিন (F)">📸 Freeze (স্টিল)</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('duplicate')" title="ক্লিপ ডুপ্লিকেট করুন (Ctrl+D)">📋 Duplicate (কপি)</button>
+        `;
+
+        if (c.type === "video" || c.type === "image") {
+          html += `<button type="button" class="quick-btn" onclick="EasyUX.quickAction('speed')" title="ক্লিপের গতি পরিবর্তন করুন">⚡ Speed (${c.speed || 1}x)</button>`;
+          html += `<button type="button" class="quick-btn" onclick="UI.switchRightTab('video')" title="ভিডিও সাইজ, ক্রপ ও গ্রিনস্ক্রিন">📐 Transform</button>`;
+        }
+        if (c.type === "text") {
+          html += `<button type="button" class="quick-btn" onclick="UI.switchRightTab('text')" title="টেক্সট ও ফন্ট পরিবর্তন">✍️ Edit Text</button>`;
+        }
+        if (c.type === "audio" || (c.type === "video" && c.volume != null)) {
+          const isMute = c.volume === 0;
+          html += `<button type="button" class="quick-btn" onclick="EasyUX.quickAction('toggle-mute')" title="মিউট বা আনমিউট করুন">${isMute ? "🔈 Unmute" : "🔇 Mute"}</button>`;
+        }
+
+        html += `<button type="button" class="quick-btn danger" onclick="EasyUX.quickAction('delete')" title="ক্লিপ মুছে ফেলুন (Del)">🗑 Del</button>`;
+        btns.innerHTML = html;
+      } else {
+        pill.className = "quick-pill";
+        pill.textContent = "💡 কুইক স্টার্ট";
+        msg.textContent = "ক্লিপে ক্লিক করুন অথবা সরাসরি নতুন উপাদান যোগ করুন:";
+        btns.innerHTML = `
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('media')" title="ভিডিও বা ছবি আপলোড করুন">📁 মিডিয়া</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('text')" title="১-ক্লিকে টেক্সট বা টাইটেল যোগ করুন">🔤 টেক্সট</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('photo-video')" title="ছবি দিয়ে ভিডিও বানান">📸 ফটো ভিডিও</button>
+          <button type="button" class="quick-btn" onclick="EasyUX.quickAction('audio')" title="ব্যাকগ্রাউন্ড মিউজিক বা সাউন্ড দিন">🎵 অডিও</button>
+          <button type="button" class="quick-btn highlight" onclick="EasyUX.openGuide()" title="ভিডিও এডিটিং সহজ গাইড দেখুন">✨ সহজ গাইড</button>
+        `;
+      }
+    },
+
+    quickAction(type) {
+      const c = Editor.selected();
+      if (type === "media") {
+        UI.switchLeftTab("media");
+        const fileInput = document.getElementById("file-input");
+        if (fileInput) fileInput.click();
+      } else if (type === "text") {
+        this.quickAddText("title");
+      } else if (type === "photo-video") {
+        UI.switchLeftTab("media");
+        const card = document.querySelector(".photo-video-card");
+        if (card) card.scrollIntoView({ behavior: "smooth" });
+      } else if (type === "audio") {
+        UI.switchLeftTab("audio");
+      } else if (type === "split") {
+        Timeline.splitAtPlayhead();
+      } else if (type === "freeze") {
+        FreezeFrame.insertAtPlayhead(3);
+      } else if (type === "duplicate") {
+        Timeline.duplicateSelected();
+      } else if (type === "delete") {
+        Timeline.deleteSelected();
+      } else if (type === "toggle-mute") {
+        if (c) {
+          c.volume = (c.volume || 1) === 0 ? 1 : 0;
+          Props.refresh();
+          Timeline.render();
+          UI.toast(c.volume === 0 ? "🔇 ক্লিপ মিউট করা হয়েছে" : "🔊 ক্লিপ আনমিউট করা হয়েছে");
+        }
+      } else if (type === "speed") {
+        if (c) {
+          const speeds = [1, 1.25, 1.5, 2, 0.5, 0.75];
+          const curIdx = speeds.indexOf(c.speed || 1);
+          const nextSpeed = speeds[(curIdx + 1) % speeds.length];
+          c.speed = nextSpeed;
+          Props.refresh();
+          Timeline.render();
+          UI.toast(`⚡ ক্লিপ স্পিড: ${nextSpeed}x`);
+        }
+      }
+    },
+
+    quickAddText(style) {
+      UI.switchLeftTab("text");
+      let sample = "নতুন টাইটেল (NEW TITLE)";
+      let font = "Inter";
+      let size = 48;
+      let y = 50;
+      let bgOn = false;
+
+      if (style === "bangla") {
+        sample = "আপনার চমৎকার বাংলা টাইটেল";
+        font = "Hind Siliguri";
+        size = 46;
+      } else if (style === "lower-third") {
+        sample = "নাম / পদবী // চ্যানেলের নাম";
+        font = "Inter";
+        size = 30;
+        y = 80;
+        bgOn = true;
+      }
+
+      const txtInp = document.getElementById("text-content");
+      if (txtInp) txtInp.value = sample;
+      const fontInp = document.getElementById("text-font");
+      if (fontInp) fontInp.value = font;
+      const sizeInp = document.getElementById("text-size");
+      if (sizeInp) sizeInp.value = size;
+
+      const newClip = TextStudio.createNewTextClip(sample);
+      newClip.font = font;
+      newClip.size = size;
+      newClip.y = y;
+      newClip.bgOn = bgOn;
+      newClip.anim = "fadeIn";
+      newClip.animDur = 0.5;
+
+      Editor.addClip(newClip);
+      Editor.selectedId = newClip.id;
+      Props.refresh();
+      Overlay.draw();
+      Timeline.render();
+
+      UI.toast(`✨ নতুন টেক্সট যুক্ত হয়েছে! ডান পাশে বা প্রিভিউতে সরাসরি ড্র্যাগ করে সাজান।`);
+      setTimeout(() => {
+        const rText = document.getElementById("rtext-content");
+        if (rText) {
+          rText.focus();
+          rText.select();
+        }
+      }, 50);
+    },
+
+    insertMediaToTimeline(rec) {
+      if (!rec) return;
+      const isImg = rec.isImage || (rec.info && rec.info.type === "image");
+      const dur = isImg ? 4 : (rec.info && rec.info.duration ? Math.max(1, rec.info.duration) : 5);
+      const startT = Editor.playhead;
+
+      const clip = {
+        id: uid("clip"),
+        type: isImg ? "image" : "video",
+        track: "v1",
+        sourceId: rec.id,
+        start: startT,
+        inPoint: 0,
+        outPoint: dur,
+        duration: dur,
+        speed: 1,
+        volume: isImg ? 0 : 1,
+        rotate: 0,
+        flipH: false,
+        flipV: false,
+        filter: "original",
+        filterIntensity: 1,
+        adjustments: EffectsStudio.defaultAdjust(),
+        effect: "none",
+        intensity: 50,
+        transition: "none",
+        transDur: 0.5,
+        fadeIn: 0,
+        fadeOut: 0,
+        kenBurns: isImg ? "zoomIn" : "none"
+      };
+
+      if (Editor.project.clips.length === 0 && rec.info && rec.info.width) {
+        Editor.project.width = rec.info.width;
+        Editor.project.height = rec.info.height;
+      }
+
+      Editor.addClip(clip);
+      Editor.selectedId = clip.id;
+      Props.refresh();
+      Timeline.render();
+      Overlay.draw();
+      Player.sync(true);
+
+      UI.toast(`✅ "${rec.info.name}" প্লে-হেডে সফলভাবে যোগ হয়েছে!`);
+    },
+
+    setupDirectManipulationClue() {
+      const mon = document.getElementById("monitor");
+      if (!mon) return;
+      let hintShown = false;
+      mon.addEventListener("mouseenter", () => {
+        if (!hintShown && Editor.selected()) {
+          hintShown = true;
+          UI.toast("💡 টিপস: প্রিভিউ স্ক্রিনে ক্লিপের ওপর সরাসরি ড্র্যাগ করে পজিশন ও সাইজ পরিবর্তন করুন!", "info");
+        }
+      });
+    },
+
+    updatePhotoCountBadge() {
+      const imgMedia = Array.from(Editor.media.values()).filter(
+        (m) => m.isImage || (m.info && m.info.type === "image")
+      );
+      const card = document.querySelector(".photo-video-card");
+      if (card && imgMedia.length > 0) {
+        const badge = card.querySelector(".status-pill");
+        if (badge) {
+          badge.textContent = `📸 ${imgMedia.length}টি ছবি রেডি`;
+          badge.style.background = "rgba(16,185,129,0.2)";
+          badge.style.color = "#10b981";
+        }
+      }
+    },
+
+    openGuide() {
+      UI.modal({
+        title: "✨ ভিডিও এডিটিং সহজ নির্দেশিকা (Easy Beginner Guide)",
+        body: `
+          <div class="guide-modal-content" style="display:flex; flex-direction:column; gap:14px; font-size:12.5px; line-height:1.6;">
+            <div style="background:linear-gradient(135deg, rgba(99,102,241,0.15), rgba(56,189,248,0.15)); border:1px solid rgba(99,102,241,0.3); border-radius:10px; padding:12px;">
+              <strong style="color:var(--text-bright); font-size:14px;">🎉 স্বাগতম! প্রফেশনাল ভিডিও বানান ৪টি সহজ ধাপে:</strong>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+              <div style="background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                <strong style="color:var(--accent-2); display:block; margin-bottom:4px;">1️⃣ মিডিয়া বা ছবি আনুন</strong>
+                বাম পাশের <strong>Media</strong> ট্যাব থেকে ভিডিও বা ফটো আপলোড করুন। ছবির ওপর <strong>"➕ টাইমলাইনে যোগ"</strong> ক্লিক করলেই তা সাথে সাথে প্লে-হেডে চলে আসবে।
+              </div>
+
+              <div style="background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                <strong style="color:var(--accent-2); display:block; margin-bottom:4px;">2️⃣ প্রিভিউতে সরাসরি ড্র্যাগ করুন</strong>
+                ক্লিপে ক্লিক করে প্রিভিউ স্ক্রিনে সরাসরি মাউস দিয়ে ড্র্যাগ করে যেকোনো পজিশনে সরান এবং কোণা ধরে ছোট-বড় বা PiP overlay করুন।
+              </div>
+
+              <div style="background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                <strong style="color:var(--accent-2); display:block; margin-bottom:4px;">3️⃣ কাটুন ও সাজান</strong>
+                যেখানে কাটতে চান প্লে-হেড নিয়ে কীবোর্ডে <kbd>S</kbd> চাপুন বা <strong>✂ Split</strong> বাটনে ক্লিক করুন। অপ্রয়োজনীয় অংশ <kbd>Del</kbd> দিয়ে মুছে দিন।
+              </div>
+
+              <div style="background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px;">
+                <strong style="color:var(--accent-2); display:block; margin-bottom:4px;">4️⃣ টেক্সট ও বাংলা (বিজয়)</strong>
+                <strong>Text</strong> ট্যাব থেকে বাংলা (বিজয় বা ইউনিকোড) টাইপ করুন। ১-ক্লিকে ভাইরাল স্টাইল ও মোশন অ্যানিমেশন দিন।
+              </div>
+            </div>
+
+            <div style="background:var(--panel-2); border-radius:10px; padding:12px; border:1px solid var(--line);">
+              <strong style="color:var(--text-bright);">⚡ দরকারি শর্টকাট (Keyboard Shortcuts):</strong>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px;">
+                <div><kbd>Space</kbd> : Play / Pause</div>
+                <div><kbd>S</kbd> : Split (কাটা)</div>
+                <div><kbd>F</kbd> : Freeze Frame (স্টিল ছবি)</div>
+                <div><kbd>Ctrl+Z</kbd> : Undo (পূর্বাবস্থা)</div>
+                <div><kbd>Ctrl+K</kbd> : Command Palette</div>
+                <div><kbd>Del</kbd> : Delete Selected Clip</div>
+              </div>
+            </div>
+          </div>
+        `,
+        actions: [{ label: "বুঝেছি, শুরু করুন! (Got it)", className: "primary" }]
+      });
+    }
+  };
+
+  // ==========================================
   // EXPOSE GLOBAL API & INTEGRATION HOOKS
   // ==========================================
   global.ChromaKey = ChromaKey;
@@ -2382,6 +2660,7 @@
   global.TextStudio = TextStudio;
   global.WorkspaceLayout = WorkspaceLayout;
   global.PhotoVideoMaker = PhotoVideoMaker;
+  global.EasyUX = EasyUX;
 
   // Initialize all features when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
@@ -2392,6 +2671,7 @@
     CommandPalette.init();
     TextStudio.init();
     WorkspaceLayout.init();
+    EasyUX.init();
   });
 })(window);
 
