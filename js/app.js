@@ -198,6 +198,16 @@
     closeModal() {
       document.getElementById("modal").hidden = true;
     },
+    closeSidebars() {
+      const left = document.getElementById("left-sidebar");
+      const right = document.getElementById("right-sidebar");
+      if (left) left.classList.remove("open");
+      if (right) right.classList.remove("open");
+      document.querySelectorAll(".mobile-nav-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.mobile === "monitor");
+      });
+      if (window.Overlay) window.Overlay.resize();
+    },
     loading(show, text, progress) {
       const veil = document.getElementById("loading-veil");
       veil.hidden = !show;
@@ -526,13 +536,55 @@
     mobileNav(which) {
       const left = document.getElementById("left-sidebar");
       const right = document.getElementById("right-sidebar");
-      left.classList.remove("open");
-      right.classList.remove("open");
-      document.body.classList.remove("mobile-hide-tl");
-      if (which === "media") left.classList.add("open");
-      if (which === "props") right.classList.add("open");
-      if (which === "timeline") document.body.classList.remove("mobile-hide-tl");
-      if (which === "export") this.handleAction("open-export");
+
+      if (which === "export") {
+        this.handleAction("open-export");
+        return;
+      }
+
+      document.querySelectorAll(".mobile-nav-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.mobile === which);
+      });
+
+      if (which === "monitor") {
+        if (left) left.classList.remove("open");
+        if (right) right.classList.remove("open");
+        document.body.classList.remove("mobile-hide-tl");
+        if (window.Overlay) window.Overlay.resize();
+        return;
+      }
+      if (which === "media") {
+        if (right) right.classList.remove("open");
+        if (left) {
+          const isOpen = left.classList.toggle("open");
+          if (!isOpen) {
+            document.querySelectorAll(".mobile-nav-btn").forEach((b) => {
+              b.classList.toggle("active", b.dataset.mobile === "monitor");
+            });
+          }
+        }
+        return;
+      }
+      if (which === "props") {
+        if (left) left.classList.remove("open");
+        if (right) {
+          const isOpen = right.classList.toggle("open");
+          if (!isOpen) {
+            document.querySelectorAll(".mobile-nav-btn").forEach((b) => {
+              b.classList.toggle("active", b.dataset.mobile === "monitor");
+            });
+          }
+        }
+        return;
+      }
+      if (which === "timeline") {
+        if (left) left.classList.remove("open");
+        if (right) right.classList.remove("open");
+        document.body.classList.toggle("mobile-hide-tl");
+        if (window.Timeline) window.Timeline.render();
+        if (window.Overlay) window.Overlay.resize();
+        return;
+      }
     },
 
     handleAction(action) {

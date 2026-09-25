@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark" data-lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="description" content="AI Video Editor Pro — browser-based professional video editor" />
   <title>AI Video Editor Pro</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='14' width='64' height='64' fill='%236c8cff'/%3E%3Cpolygon points='24,16 48,32 24,48' fill='white'/%3E%3C/svg%3E" />
@@ -66,6 +66,7 @@
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.swapSidebars()" title="Swap with Right Inspector (ডান ও বাম অদলবদল)">⇄</button>
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleFloat('left-sidebar')" title="Float / Detach Panel (ভাসমান উইন্ডো)">⛶</button>
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleCollapse('left-sidebar')" title="Collapse / Expand (হাইড/শো)">◀</button>
+            <button type="button" class="btn icon mini mobile-close-btn" onclick="UI.closeSidebars()" title="Close Panel (প্যানেল বন্ধ করুন)">✕</button>
           </div>
         </div>
         <nav class="tool-tabs" role="tablist" aria-label="Tool panels">
@@ -605,6 +606,7 @@
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.swapSidebars()" title="Swap with Left Tools (ডান ও বাম অদলবদল)">⇄</button>
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleFloat('right-sidebar')" title="Float / Detach Panel (ভাসমান উইন্ডো)">⛶</button>
             <button type="button" class="btn icon mini" onclick="WorkspaceLayout.toggleCollapse('right-sidebar')" title="Collapse / Expand (হাইড/শো)">▶</button>
+            <button type="button" class="btn icon mini mobile-close-btn" onclick="UI.closeSidebars()" title="Close Panel (প্যানেল বন্ধ করুন)">✕</button>
           </div>
         </div>
         <nav class="tool-tabs" role="tablist">
@@ -842,11 +844,27 @@
       </div>
     </section>
 
-    <nav class="mobile-toolbar" aria-label="Mobile tools">
-      <button data-mobile="media">Media</button>
-      <button data-mobile="timeline">Timeline</button>
-      <button data-mobile="props">Props</button>
-      <button data-mobile="export">Export</button>
+    <nav class="mobile-toolbar" id="mobile-bottom-nav" aria-label="Mobile Navigation">
+      <button type="button" class="mobile-nav-btn active" data-mobile="monitor" title="Monitor Preview">
+        <span class="m-icon">🎬</span>
+        <span class="m-label">Monitor</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-mobile="media" title="Media &amp; Tools">
+        <span class="m-icon">📁</span>
+        <span class="m-label">Tools</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-mobile="timeline" title="Timeline Editor">
+        <span class="m-icon">⏱️</span>
+        <span class="m-label">Timeline</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-mobile="props" title="Inspector Properties">
+        <span class="m-icon">⚙️</span>
+        <span class="m-label">Inspector</span>
+      </button>
+      <button type="button" class="mobile-nav-btn accent-nav" data-mobile="export" title="Export Video">
+        <span class="m-icon">🚀</span>
+        <span class="m-label">Export</span>
+      </button>
     </nav>
   </div>
 
