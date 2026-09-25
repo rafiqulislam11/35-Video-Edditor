@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='14' width='64' height='64' fill='%236c8cff'/%3E%3Cpolygon points='24,16 48,32 24,48' fill='white'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Montserrat:wght@600;700;800;900&family=Oswald:wght@600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@600;700;800&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Anton&family=Bangers&family=Bebas+Neue&family=Cairo:wght@600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Montserrat:wght@600;700;800;900&family=Noto+Sans+Arabic:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Oswald:wght@600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@600;700;800&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -178,27 +178,43 @@
             <p class="hint">Professional broadcast titles &amp; social media handle callouts.</p>
             <div id="text-lower-thirds-grid" class="card-grid"></div>
 
-            <h3>Text Content &amp; Typography</h3>
+            <h3>Text Content &amp; Multilingual Typography</h3>
+            <div class="lang-pills btn-row" style="margin-bottom: 8px;">
+              <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('bn')">🇧🇩 বাংলা</button>
+              <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('en')">🇬🇧 English</button>
+              <button class="btn" type="button" onclick="TextStudio.setLanguagePreset('ar')">🇸🇦 العربية (RTL)</button>
+            </div>
             <label>Content (Multiline supported)
-              <textarea id="text-content" rows="3" placeholder="Type text here…"></textarea>
+              <textarea id="text-content" rows="3" dir="auto" placeholder="বাংলা, English, অথবা العربية লিখুন…"></textarea>
             </label>
 
             <div class="row-2">
               <label>Font Family
                 <select id="text-font">
-                  <option value="Inter">Inter (Clean UI)</option>
-                  <option value="Bebas Neue">Bebas Neue (YouTube / TikTok)</option>
-                  <option value="Montserrat">Montserrat (Bold Modern)</option>
-                  <option value="Poppins">Poppins (Friendly Sans)</option>
-                  <option value="Roboto">Roboto (Android Standard)</option>
-                  <option value="Anton">Anton (Heavy Impact)</option>
-                  <option value="Oswald">Oswald (Tall Headline)</option>
-                  <option value="Impact">Impact (Meme Classic)</option>
-                  <option value="Playfair Display">Playfair Display (Luxury Serif)</option>
-                  <option value="Pacifico">Pacifico (Handwritten Script)</option>
-                  <option value="Bangers">Bangers (Comic / Pop)</option>
-                  <option value="Georgia">Georgia (Editorial)</option>
-                  <option value="Courier New">Courier New (Typewriter / Code)</option>
+                  <optgroup label="🇧🇩 বাংলা (Bangla)">
+                    <option value="Hind Siliguri" selected>Hind Siliguri (হিন্দ শিলিগুড়ি - Clean)</option>
+                    <option value="Noto Sans Bengali">Noto Sans Bengali (নোটো সান্স)</option>
+                  </optgroup>
+                  <optgroup label="🇸🇦 العربية (Arabic - RTL)">
+                    <option value="Cairo">Cairo (القاهرة - Modern Bold)</option>
+                    <option value="Amiri">Amiri (الأميري - Classical Naskh)</option>
+                    <option value="Noto Sans Arabic">Noto Sans Arabic (الخط العربي)</option>
+                  </optgroup>
+                  <optgroup label="🇬🇧 English / Latin">
+                    <option value="Inter">Inter (Clean UI)</option>
+                    <option value="Bebas Neue">Bebas Neue (YouTube / TikTok)</option>
+                    <option value="Montserrat">Montserrat (Bold Modern)</option>
+                    <option value="Poppins">Poppins (Friendly Sans)</option>
+                    <option value="Roboto">Roboto (Android Standard)</option>
+                    <option value="Anton">Anton (Heavy Impact)</option>
+                    <option value="Oswald">Oswald (Tall Headline)</option>
+                    <option value="Impact">Impact (Meme Classic)</option>
+                    <option value="Playfair Display">Playfair Display (Luxury Serif)</option>
+                    <option value="Pacifico">Pacifico (Handwritten Script)</option>
+                    <option value="Bangers">Bangers (Comic / Pop)</option>
+                    <option value="Georgia">Georgia (Editorial)</option>
+                    <option value="Courier New">Courier New (Typewriter / Code)</option>
+                  </optgroup>
                 </select>
               </label>
               <label>Size (px)
@@ -613,23 +629,34 @@
             <h2>Text Inspector</h2>
             <p class="hint">Live customize selected text layer properties.</p>
             <label>Selected Text
-              <textarea id="rtext-content" rows="2" placeholder="Text content…"></textarea>
+              <textarea id="rtext-content" rows="2" dir="auto" placeholder="বাংলা, English, বা العربية লিখুন…"></textarea>
             </label>
             <div class="row-2">
               <label>Font
                 <select id="rtext-font">
-                  <option value="Inter">Inter</option>
-                  <option value="Bebas Neue">Bebas Neue</option>
-                  <option value="Montserrat">Montserrat</option>
-                  <option value="Poppins">Poppins</option>
-                  <option value="Anton">Anton</option>
-                  <option value="Oswald">Oswald</option>
-                  <option value="Impact">Impact</option>
-                  <option value="Playfair Display">Playfair Display</option>
-                  <option value="Pacifico">Pacifico</option>
-                  <option value="Bangers">Bangers</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Courier New">Courier New</option>
+                  <optgroup label="🇧🇩 বাংলা (Bangla)">
+                    <option value="Hind Siliguri">Hind Siliguri (বাংলা)</option>
+                    <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+                  </optgroup>
+                  <optgroup label="🇸🇦 العربية (Arabic - RTL)">
+                    <option value="Cairo">Cairo (العربية)</option>
+                    <option value="Amiri">Amiri (الأميري)</option>
+                    <option value="Noto Sans Arabic">Noto Sans Arabic</option>
+                  </optgroup>
+                  <optgroup label="🇬🇧 English / Latin">
+                    <option value="Inter">Inter</option>
+                    <option value="Bebas Neue">Bebas Neue</option>
+                    <option value="Montserrat">Montserrat</option>
+                    <option value="Poppins">Poppins</option>
+                    <option value="Anton">Anton</option>
+                    <option value="Oswald">Oswald</option>
+                    <option value="Impact">Impact</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                    <option value="Pacifico">Pacifico</option>
+                    <option value="Bangers">Bangers</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Courier New">Courier New</option>
+                  </optgroup>
                 </select>
               </label>
               <label>Size <input type="number" id="rtext-size" min="8" max="260" value="48" /></label>

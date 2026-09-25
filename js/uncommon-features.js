@@ -1361,6 +1361,44 @@
       this.bindInputs();
     },
 
+    setLanguagePreset(lang) {
+      let sample = "";
+      let font = "Hind Siliguri";
+      if (lang === "bn") {
+        sample = "আপনার ভিডিওর জন্য আকর্ষণীয় বাংলা টেক্সট";
+        font = "Hind Siliguri";
+      } else if (lang === "ar") {
+        sample = "عنوان فيديو احترافي وجذاب";
+        font = "Cairo";
+      } else {
+        sample = "VIRAL VIDEO TITLE";
+        font = "Bebas Neue";
+      }
+
+      const txtInp = document.getElementById("text-content");
+      if (txtInp) txtInp.value = sample;
+      const fontInp = document.getElementById("text-font");
+      if (fontInp) fontInp.value = font;
+      const rTxtInp = document.getElementById("rtext-content");
+      if (rTxtInp) rTxtInp.value = sample;
+      const rFontInp = document.getElementById("rtext-font");
+      if (rFontInp) rFontInp.value = font;
+
+      const c = Editor.selected();
+      if (c && c.type === "text") {
+        c.text = sample;
+        c.font = font;
+        Overlay.draw();
+        Timeline.render();
+      } else {
+        const newClip = this.createNewTextClip(sample);
+        newClip.font = font;
+        Overlay.draw();
+        Timeline.render();
+      }
+      UI.toast(`Language preset: ${lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'English'}`);
+    },
+
     renderUI() {
       const stylesHost = document.getElementById("text-styles-grid");
       if (stylesHost) {

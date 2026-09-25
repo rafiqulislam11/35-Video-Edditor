@@ -575,9 +575,13 @@
       if (c.rotate) {
         ctx.rotate((c.rotate * Math.PI) / 180);
       }
-      ctx.scale(scale, scale);
+      // Multilingual & script direction (Arabic RTL & Bangla conjuncts)
+      const isArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(rawText);
+      if ("direction" in ctx) {
+        ctx.direction = isArabic ? "rtl" : "ltr";
+      }
 
-      ctx.font = `${c.italic ? "italic " : ""}${c.bold ? "700 " : "600 "}${fontSize}px ${c.font || "Inter"}, sans-serif`;
+      ctx.font = `${c.italic ? "italic " : ""}${c.bold ? "700 " : "600 "}${fontSize}px "${c.font || "Hind Siliguri"}", "Hind Siliguri", "Noto Sans Bengali", "Cairo", "Amiri", "Noto Sans Arabic", "Inter", sans-serif`;
       ctx.textAlign = c.align || "center";
       ctx.textBaseline = "middle";
 
